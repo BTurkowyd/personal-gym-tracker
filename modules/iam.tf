@@ -39,7 +39,8 @@ resource "aws_iam_role_policy" "dynamodb_access" {
         "dynamodb:DeleteItem",
         "dynamodb:PutItem",
         "dynamodb:UpdateItem",
-        "dynamodb:Scan"
+        "dynamodb:Scan",
+        "dynamodb:Query"
       ]
       Resource = [
         aws_dynamodb_table.workouts_table.arn
