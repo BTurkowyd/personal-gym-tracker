@@ -38,6 +38,7 @@ resource "aws_lambda_function" "fetch_recent_from_hevy" {
       HEVY_TOKEN = local.envs["HEVY_TOKEN"]
       BUCKET_NAME = aws_s3_bucket.upload_bucket.bucket,
       DYNAMODB_TABLE_NAME = aws_dynamodb_table.workouts_table.name
+      DISCORD_WEBHOOK = local.envs["DISCORD_WEBHOOK"]
     }
   }
 }

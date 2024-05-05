@@ -59,12 +59,18 @@ def lambda_fetch_workouts(event, context):
 
     bucket_name = os.environ.get('BUCKET_NAME')
     table_name = os.environ.get('DYNAMODB_TABLE_NAME')
+    discord_webhook = os.environ.get('DISCORD_WEBHOOK')
 
     response = requests.get(f'https://api.hevyapp.com/workouts_batch/{str(latest_workout_index+1)}', headers=headers)
     workouts = response.json()
 
     if len(workouts) == 0:
         print('No workouts to fetch since the last update.')
+        message_dict = {"content": 'No workouts to fetch since the last update.'}
+        try:
+            response = requests.post(discord_webhook, json=message_dict)
+        except Exception as e:
+            print(e)
     else:
         for w in workouts:
             workout_id = w['id']
@@ -90,3 +96,9 @@ def lambda_fetch_workouts(event, context):
             register_file_in_dynamodb(table_name, item)
 
         update_latest_workout_parameter_store(workouts[-1]['index'])
+
+        message_dict = {"content": 'All missing workouts loaded.'}
+        try:
+            response = requests.post(discord_webhook, json=message_dict)
+        except Exception as e:
+            print(e)
