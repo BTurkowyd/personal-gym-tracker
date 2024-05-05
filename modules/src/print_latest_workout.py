@@ -6,6 +6,14 @@ import boto3
 import requests
 
 
+def send_message(message: str, webhook_url: str) -> None:
+    message_dict = {"content": message}
+    try:
+        response = requests.post(webhook_url, json=message_dict)
+    except Exception as e:
+        print(e)
+
+
 def print_latest_workout(event, context):
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(
@@ -52,9 +60,8 @@ def print_latest_workout(event, context):
     message += f'https://hevy.com/workout/{workout_json["id"]}\n'
 
     discord_webhook = os.environ['DISCORD_WEBHOOK']
-    message_dict = {"content": message}
 
-    try:
-        response = requests.post(discord_webhook, json=message_dict)
-    except Exception as e:
-        print(e)
+    send_message(
+        message=message,
+        webhook_url=discord_webhook
+    )

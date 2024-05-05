@@ -36,6 +36,14 @@ def update_latest_workout_parameter_store(latest_workout_index: int) -> None:
     )
 
 
+def send_message(message: str, webhook_url: str) -> None:
+    message_dict = {"content": message}
+    try:
+        response = requests.post(webhook_url, json=message_dict)
+    except Exception as e:
+        print(e)
+
+
 def lambda_fetch_workouts(event, context):
 
     headers = {
@@ -66,11 +74,11 @@ def lambda_fetch_workouts(event, context):
 
     if len(workouts) == 0:
         print('No workouts to fetch since the last update.')
-        message_dict = {"content": 'No workouts to fetch since the last update.'}
-        try:
-            response = requests.post(discord_webhook, json=message_dict)
-        except Exception as e:
-            print(e)
+
+        send_message(
+            message='No workouts to fetch since the last update.',
+            webhook_url=discord_webhook
+        )
     else:
         for w in workouts:
             workout_id = w['id']
@@ -97,8 +105,7 @@ def lambda_fetch_workouts(event, context):
 
         update_latest_workout_parameter_store(workouts[-1]['index'])
 
-        message_dict = {"content": 'All missing workouts loaded.'}
-        try:
-            response = requests.post(discord_webhook, json=message_dict)
-        except Exception as e:
-            print(e)
+        send_message(
+            message='All missing workouts loaded.',
+            webhook_url=discord_webhook
+        )
