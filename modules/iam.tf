@@ -21,7 +21,10 @@ resource "aws_iam_role_policy" "s3_access" {
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = "s3:PutObject"
+      Action   = [
+        "s3:PutObject",
+        "s3:GetObject"
+      ]
       Resource = [
         aws_s3_bucket.upload_bucket.arn,
         "${aws_s3_bucket.upload_bucket.arn}/*"
