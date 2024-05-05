@@ -11,8 +11,8 @@ resource "aws_lambda_function" "fetching_from_hevy" {
   environment {
     variables = {
       HEVY_TOKEN = local.envs["HEVY_TOKEN"]
-      BUCKET_NAME = local.envs["BUCKET_NAME"],
-      DYNAMODB_TABLE_NAME = local.envs["DYNAMODB_TABLE_NAME"]
+      BUCKET_NAME = aws_s3_bucket.upload_bucket.bucket,
+      DYNAMODB_TABLE_NAME = aws_dynamodb_table.workouts_table.name
     }
   }
 }
@@ -36,8 +36,8 @@ resource "aws_lambda_function" "fetch_recent_from_hevy" {
   environment {
     variables = {
       HEVY_TOKEN = local.envs["HEVY_TOKEN"]
-      BUCKET_NAME = local.envs["BUCKET_NAME"],
-      DYNAMODB_TABLE_NAME = local.envs["DYNAMODB_TABLE_NAME"]
+      BUCKET_NAME = aws_s3_bucket.upload_bucket.bucket,
+      DYNAMODB_TABLE_NAME = aws_dynamodb_table.workouts_table.name
     }
   }
 }
