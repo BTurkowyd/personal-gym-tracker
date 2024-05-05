@@ -47,3 +47,12 @@ data "archive_file" "recent_workouts" {
   source_file = "${path.module}/src/load_recent_workouts.py"
   output_path = "${path.module}/src/load_recent_workouts.zip"
 }
+
+resource "aws_lambda_permission" "api_gw" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.fetch_recent_from_hevy.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.silka_workouts.execution_arn}/*/*"
+}
