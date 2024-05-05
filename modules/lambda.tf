@@ -56,11 +56,13 @@ resource "aws_lambda_function" "print_latest_workout" {
   runtime = "python3.11"
   timeout = 900
   filename      = "${path.module}/src/print_latest_workout.zip"
+  layers = [aws_lambda_layer_version.python_requests.arn]
 
   environment {
     variables = {
       BUCKET_NAME = aws_s3_bucket.upload_bucket.bucket,
       DYNAMODB_TABLE_NAME = aws_dynamodb_table.workouts_table.name
+      DISCORD_WEBHOOK = local.envs["DISCORD_WEBHOOK"]
     }
   }
 }

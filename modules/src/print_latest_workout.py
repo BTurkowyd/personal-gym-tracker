@@ -3,6 +3,7 @@ import os
 from pprint import pprint
 
 import boto3
+import requests
 
 
 def print_latest_workout(event, context):
@@ -41,10 +42,19 @@ def print_latest_workout(event, context):
     body = response['Body'].read().decode('utf-8')
     workout_json = json.loads(body)
 
+    message = ''
     for e in workout_json['exercises']:
-        print(e['title'])
+        message += f'{e["title"]}\n'
         for s in e['sets']:
-            print(f'Weight: {s["weight_kg"]} kg, reps: {s["reps"]}')
-        print('------------------')
+            message += f'Weight: {s["weight_kg"]} kg, reps: {s["reps"]}\n'
+        message += '------------------\n'
 
-    print(f'https://hevy.com/workout/{workout_json["id"]}')
+    message += f'https://hevy.com/workout/{workout_json["id"]}\n'
+
+    discord_webhook = os.environ['DISCORD_WEBHOOK']
+    message_dict = {"content": message}
+
+    try:
+        response = requests.post(discord_webhook, json=message_dict)
+    except Exception as e:
+        print(e)
