@@ -46,3 +46,5 @@ def print_latest_workout(event, context):
         for s in e['sets']:
             print(f'Weight: {s["weight_kg"]} kg, reps: {s["reps"]}')
         print('------------------')
+
+    print(f'https://hevy.com/workout/{workout_json["id"]}')

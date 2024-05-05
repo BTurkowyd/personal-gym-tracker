@@ -14,8 +14,8 @@
 #     sleep 5
 #
 #     sudo -u postgres psql -c "CREATE DATABASE testdb;"
-#     sudo -u postgres psql -c "CREATE USER vertislav WITH ENCRYPTED PASSWORD 'password';"
-#     sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE testdb TO vertislav;"
+#     sudo -u postgres psql -c "CREATE USER ${local.envs["DB_USERNAME"]} WITH ENCRYPTED PASSWORD '${local.envs["DB_PASSWORD"]}';"
+#     sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE testdb TO ${local.envs["DB_USERNAME"]};"
 #
 #     echo "listen_addresses = '*'          # what IP address(es) to listen on;" >> /etc/postgresql/16/main/postgresql.conf
 #     echo "host    all    all    0.0.0.0/0   md5" >> /etc/postgresql/16/main/pg_hba.conf
