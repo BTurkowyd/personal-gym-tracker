@@ -74,11 +74,36 @@ data "archive_file" "print_latest_workout" {
   output_path = "${path.module}/src/print_latest_workout.zip"
 }
 
+resource "aws_lambda_function" "test_lambda" {
+  function_name = "TestLambda"
+  role          = aws_iam_role.lambda_role.arn
+  source_code_hash = data.archive_file.test_lambda.output_base64sha256
+  handler       = "test_lambda.lambda_handler"
+  runtime = "python3.11"
+  timeout = 900
+  filename      = "${path.module}/src/test_lambda.zip"
+  layers = [
+    aws_lambda_layer_version.python_requests.arn,
+    aws_lambda_layer_version.pynacl.arn
+  ]
+
+  environment {
+    variables = {
+      DISCORD_APP_PUBLIC_KEY = local.envs["DISCORD_APP_PUBLIC_KEY"]
+    }
+  }
+}
+
+data "archive_file" "test_lambda" {
+    type        = "zip"
+  source_file = "${path.module}/src/test_lambda.py"
+  output_path = "${path.module}/src/test_lambda.zip"
+}
 
 # resource "aws_lambda_permission" "api_gw" {
 #   statement_id  = "AllowExecutionFromAPIGateway"
 #   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.fetch_recent_from_hevy.function_name
+#   function_name = aws_lambda_function.test_lambda.function_name
 #   principal     = "apigateway.amazonaws.com"
 #
 #   source_arn = "${aws_apigatewayv2_api.silka_workouts.execution_arn}/*/*"
