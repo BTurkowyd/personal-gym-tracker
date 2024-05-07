@@ -100,11 +100,11 @@ data "archive_file" "test_lambda" {
   output_path = "${path.module}/src/test_lambda.zip"
 }
 
-resource "aws_lambda_permission" "api_gw" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.test_lambda.function_name
-  principal     = "apigateway.amazonaws.com"
-
-  source_arn = "${aws_apigatewayv2_api.silka_workouts.execution_arn}/*/*"
-}
+# resource "aws_lambda_permission" "api_gw" {
+#   statement_id  = "AllowExecutionFromAPIGateway"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.test_lambda.function_name
+#   principal     = "apigateway.amazonaws.com"
+#
+#   source_arn = "${aws_apigatewayv2_api.silka_workouts.execution_arn}/*/*"
+# }
