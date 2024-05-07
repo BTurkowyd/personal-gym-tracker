@@ -23,7 +23,7 @@ def lambda_handler(event, context):
 
             return {
                 "statusCode": 200,
-                "body": json.dump(response_body)
+                "body": json.dumps(response_body)
             }
         else:
             print('smth went wrong')
