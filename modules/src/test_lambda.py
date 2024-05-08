@@ -2,27 +2,24 @@ import json
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 import os
+from pprint import pprint
 
 PUBLIC_KEY = os.environ.get('DISCORD_APP_PUBLIC_KEY')
 
 
 def lambda_handler(event, context):
     try:
-        body = json.loads(event['body'])
-
+        body_str = event['body']
         signature = event['headers']['x-signature-ed25519']
         timestamp = event['headers']['x-signature-timestamp']
 
-        # validate the interaction
-
         verify_key = VerifyKey(bytes.fromhex(PUBLIC_KEY))
 
-        message = timestamp + json.dumps(body, separators=(',', ':'))
-
         try:
-            verify_key.verify(message.encode(), signature=bytes.fromhex(signature))
+            verify_key.verify(f'{timestamp}{body_str}'.encode(), bytes.fromhex(signature))
             print('Verification successful')
-        except BadSignatureError:
+        except BadSignatureError as e:
+            pprint(e)
             print('Verification failed')
             return {
                 'statusCode': 401,
@@ -30,6 +27,8 @@ def lambda_handler(event, context):
             }
 
         # handle the interaction
+
+        body = json.loads(body_str)
 
         t = body['type']
 
@@ -50,7 +49,8 @@ def lambda_handler(event, context):
                 'statusCode': 400,
                 'body': json.dumps('unhandled request type')
             }
-    except:
+    except Exception as e:
+        print(e)
         print('I just crashed')
 
 
