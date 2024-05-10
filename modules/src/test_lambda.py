@@ -6,52 +6,60 @@ from pprint import pprint
 
 PUBLIC_KEY = os.environ.get('DISCORD_APP_PUBLIC_KEY')
 
+RESPONSE_TYPES = {
+    "PONG": 1,
+    "ACK_NO_SOURCE": 2,
+    "MESSAGE_NO_SOURCE": 3,
+    "MESSAGE_WITH_SOURCE": 4,
+    "ACK_WITH_SOURCE": 5
+}
+
+PONG_RESPONSE = {
+    'statusCode': 200,
+    'body': json.dumps({
+        'type': 1
+    })
+}
+
+UNHANDLED_RESPONSE = {
+    'statusCode': 400,
+    'body': json.dumps('unhandled request type')
+}
+
 
 def lambda_handler(event, context):
     try:
-        body_str = event['body']
-        signature = event['headers']['x-signature-ed25519']
-        timestamp = event['headers']['x-signature-timestamp']
+        if not verify_call(event):
+            return
 
-        verify_key = VerifyKey(bytes.fromhex(PUBLIC_KEY))
+        body = json.loads(event['body'])
+        request_type = body['type']
 
-        try:
-            verify_key.verify(f'{timestamp}{body_str}'.encode(), bytes.fromhex(signature))
-            print('Verification successful')
-        except BadSignatureError as e:
-            pprint(e)
-            print('Verification failed')
-            return {
-                'statusCode': 401,
-                'body': json.dumps('invalid request signature')
-            }
-
-        # handle the interaction
-
-        body = json.loads(body_str)
-
-        t = body['type']
-
-        if t == 1:
-            print('Type 1')
-            return {
-                'statusCode': 200,
-                'body': json.dumps({
-                    'type': 1
-                })
-            }
-        elif t == 2:
-            print('Type 2')
+        if request_type == RESPONSE_TYPES['PONG']:
+            return PONG_RESPONSE
+        elif request_type == RESPONSE_TYPES['ACK_NO_SOURCE']:
             return command_handler(body)
         else:
-            print('smth went wrong')
-            return {
-                'statusCode': 400,
-                'body': json.dumps('unhandled request type')
-            }
+            return UNHANDLED_RESPONSE
     except Exception as e:
         print(e)
-        print('I just crashed')
+
+
+def verify_call(event) -> bool:
+    body_str = event['body']
+    signature = event['headers']['x-signature-ed25519']
+    timestamp = event['headers']['x-signature-timestamp']
+
+    verify_key = VerifyKey(bytes.fromhex(PUBLIC_KEY))
+
+    try:
+        verify_key.verify(f'{timestamp}{body_str}'.encode(), bytes.fromhex(signature))
+        print('Verification successful')
+        return True
+    except BadSignatureError as e:
+        pprint(e)
+        print('Verification failed')
+        return False
 
 
 def command_handler(body):
