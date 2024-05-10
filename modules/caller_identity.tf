@@ -11,3 +11,11 @@ output "caller_arn" {
 output "caller_user" {
   value = data.aws_caller_identity.current.user_id
 }
+
+data "http" "myip" {
+  url = "https://ipv4.icanhazip.com"
+}
+
+output "current_ip" {
+  value = chomp(data.http.myip.response_body)
+}

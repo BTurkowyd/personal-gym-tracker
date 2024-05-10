@@ -17,7 +17,7 @@ resource "aws_vpc_security_group_ingress_rule" "postgres_port" {
   security_group_id = aws_security_group.ec2_pg_sg.id
   from_port = 5432
   to_port = 5432
-  cidr_ipv4 = "89.245.180.0/24"
+  cidr_ipv4 = "${chomp(data.http.myip.response_body)}/32"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ssh_port" {
