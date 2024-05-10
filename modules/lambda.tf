@@ -23,57 +23,6 @@ data "archive_file" "all_workouts" {
   output_path = "${path.module}/src/load_all_workouts.zip"
 }
 
-resource "aws_lambda_function" "fetch_recent_from_hevy" {
-  function_name = "FetchRecentWorkoutsFromHevy"
-  role          = aws_iam_role.lambda_role.arn
-  source_code_hash = data.archive_file.recent_workouts.output_base64sha256
-  handler       = "load_recent_workouts.lambda_fetch_workouts"
-  runtime = "python3.11"
-  timeout = 900
-  filename      = "${path.module}/src/load_recent_workouts.zip"
-  layers = [aws_lambda_layer_version.python_requests.arn]
-
-  environment {
-    variables = {
-      HEVY_TOKEN = local.envs["HEVY_TOKEN"]
-      BUCKET_NAME = aws_s3_bucket.upload_bucket.bucket,
-      DYNAMODB_TABLE_NAME = aws_dynamodb_table.workouts_table.name
-      DISCORD_WEBHOOK = local.envs["DISCORD_WEBHOOK"]
-    }
-  }
-}
-
-data "archive_file" "recent_workouts" {
-  type        = "zip"
-  source_file = "${path.module}/src/load_recent_workouts.py"
-  output_path = "${path.module}/src/load_recent_workouts.zip"
-}
-
-resource "aws_lambda_function" "print_latest_workout" {
-  function_name = "PrintLatestWorkout"
-  role          = aws_iam_role.lambda_role.arn
-  source_code_hash = data.archive_file.print_latest_workout.output_base64sha256
-  handler       = "print_latest_workout.print_latest_workout"
-  runtime = "python3.11"
-  timeout = 900
-  filename      = "${path.module}/src/print_latest_workout.zip"
-  layers = [aws_lambda_layer_version.python_requests.arn]
-
-  environment {
-    variables = {
-      BUCKET_NAME = aws_s3_bucket.upload_bucket.bucket,
-      DYNAMODB_TABLE_NAME = aws_dynamodb_table.workouts_table.name
-      DISCORD_WEBHOOK = local.envs["DISCORD_WEBHOOK"]
-    }
-  }
-}
-
-data "archive_file" "print_latest_workout" {
-  type        = "zip"
-  source_file = "${path.module}/src/print_latest_workout.py"
-  output_path = "${path.module}/src/print_latest_workout.zip"
-}
-
 resource "aws_lambda_function" "test_lambda" {
   function_name = "TestLambda"
   role          = aws_iam_role.lambda_role.arn
