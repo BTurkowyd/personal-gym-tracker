@@ -1,45 +1,52 @@
-# resource "aws_apigatewayv2_api" "silka_workouts" {
-#   name          = "SilkaWorkouts"
-#   protocol_type = "HTTP"
-#   cors_configuration {
-#     allow_origins = ["*"]
-#     allow_methods = ["GET", "POST"]
-#     allow_headers = ["Authorization"]
-#     max_age = 300
-#   }
-# }
-#
-# resource "aws_apigatewayv2_integration" "fetch_latest" {
-#   api_id               = aws_apigatewayv2_api.silka_workouts.id
-#   integration_type     = "AWS_PROXY"
-#   integration_uri      = aws_lambda_function.test_lambda.invoke_arn
-#   integration_method   = "POST"
-#   connection_type      = "INTERNET"
-# }
-#
-# resource "aws_apigatewayv2_route" "fetch_latest_route" {
-#   api_id    = aws_apigatewayv2_api.silka_workouts.id
-#   route_key = "POST /fetch_latest"
-#   target    = "integrations/${aws_apigatewayv2_integration.fetch_latest.id}"
-# }
-#
-# resource "aws_apigatewayv2_stage" "stage" {
-#   api_id    = aws_apigatewayv2_api.silka_workouts.id
-#   name      = "dev"
-#   auto_deploy = true
-# }
-#
-# output "api_gateway_url" {
-#   value = aws_apigatewayv2_api.silka_workouts.api_endpoint
-# }
-#
-# resource "aws_apigatewayv2_deployment" "deployment" {
-#   api_id      = aws_apigatewayv2_api.silka_workouts.id
-#   description = "Dev deployment"
-#
-#   depends_on = [aws_apigatewayv2_route.fetch_latest_route]
-#
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
+resource "aws_api_gateway_rest_api" "silka_workouts" {
+  name        = "SilkaWorkoutsDiscordBotRestAPI"
+}
+
+resource "aws_api_gateway_resource" "silka_workouts_resource" {
+  rest_api_id = aws_api_gateway_rest_api.silka_workouts.id
+  parent_id   = aws_api_gateway_rest_api.silka_workouts.root_resource_id
+  path_part   = "test_lambda"
+}
+
+resource "aws_api_gateway_method" "silka_workouts_post" {
+  rest_api_id   = aws_api_gateway_rest_api.silka_workouts.id
+  resource_id   = aws_api_gateway_resource.silka_workouts_resource.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method_response" "post_method_response" {
+  http_method = aws_api_gateway_method.silka_workouts_post.http_method
+  resource_id = aws_api_gateway_resource.silka_workouts_resource.id
+  rest_api_id = aws_api_gateway_rest_api.silka_workouts.id
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration" "lambda_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.silka_workouts.id
+  resource_id             = aws_api_gateway_resource.silka_workouts_resource.id
+  http_method             = aws_api_gateway_method.silka_workouts_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.test_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_deployment" "rest_api_deployment" {
+  depends_on = [aws_api_gateway_integration.lambda_integration]
+
+  rest_api_id = aws_api_gateway_rest_api.silka_workouts.id
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_stage" "dev_stage" {
+  deployment_id = aws_api_gateway_deployment.rest_api_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.silka_workouts.id
+  stage_name    = "dev"
+}
