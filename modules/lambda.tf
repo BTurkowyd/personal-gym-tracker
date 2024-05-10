@@ -23,14 +23,14 @@ data "archive_file" "all_workouts" {
   output_path = "${path.module}/src/load_all_workouts.zip"
 }
 
-resource "aws_lambda_function" "test_lambda" {
-  function_name = "TestLambda"
+resource "aws_lambda_function" "discord_bot" {
+  function_name = "DiscordBotWorkouts"
   role          = aws_iam_role.lambda_role.arn
-  source_code_hash = data.archive_file.test_lambda.output_base64sha256
-  handler       = "test_lambda.lambda_handler"
+  source_code_hash = data.archive_file.discord_bot.output_base64sha256
+  handler       = "discord_bot.lambda_handler"
   runtime = "python3.11"
   timeout = 900
-  filename      = "${path.module}/src/test_lambda.zip"
+  filename      = "${path.module}/src/discord_bot.zip"
   layers = [
     aws_lambda_layer_version.python_requests.arn,
     aws_lambda_layer_version.pynacl.arn
@@ -46,16 +46,16 @@ resource "aws_lambda_function" "test_lambda" {
   }
 }
 
-data "archive_file" "test_lambda" {
+data "archive_file" "discord_bot" {
     type        = "zip"
-  source_file = "${path.module}/src/test_lambda.py"
-  output_path = "${path.module}/src/test_lambda.zip"
+  source_file = "${path.module}/src/discord_bot.py"
+  output_path = "${path.module}/src/discord_bot.zip"
 }
 
 resource "aws_lambda_permission" "api_gw" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.test_lambda.function_name
+  function_name = aws_lambda_function.discord_bot.function_name
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_api_gateway_rest_api.silka_workouts.execution_arn}/*/*"
