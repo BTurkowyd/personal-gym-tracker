@@ -89,6 +89,9 @@ resource "aws_lambda_function" "test_lambda" {
 
   environment {
     variables = {
+      HEVY_TOKEN = local.envs["HEVY_TOKEN"]
+      BUCKET_NAME = aws_s3_bucket.upload_bucket.bucket,
+      DYNAMODB_TABLE_NAME = aws_dynamodb_table.workouts_table.name
       DISCORD_APP_PUBLIC_KEY = local.envs["DISCORD_APP_PUBLIC_KEY"]
     }
   }

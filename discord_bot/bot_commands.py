@@ -15,6 +15,16 @@ json = [
     'name': 'bleb',
     'description': 'Test command.',
     'options': []
+  },
+  {
+    'name': 'fetch_workouts',
+    'description': 'Fetching missing workouts to the S3 bucket.',
+    'options': []
+  },
+  {
+    'name': 'print_latest_workout',
+    'description': 'Print the latest workout',
+    'options': []
   }
 ]
 
