@@ -1,4 +1,4 @@
 /modules/.env
 /modules/.terraform/
 /local_testing
-/discord_bot/.env
+/side-scripts/discord_bot/.env
