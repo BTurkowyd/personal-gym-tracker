@@ -46,3 +46,17 @@ resource "aws_api_gateway_stage" "dev_stage" {
   rest_api_id   = aws_api_gateway_rest_api.silka_workouts.id
   stage_name    = "dev"
 }
+
+resource "aws_api_gateway_usage_plan" "rate_limiting" {
+  name = "SilkaWorkoutsDiscordBotRestAPIRateLimiter"
+
+  api_stages {
+    api_id = aws_api_gateway_rest_api.silka_workouts.id
+    stage  = aws_api_gateway_stage.dev_stage.stage_name
+  }
+
+  quota_settings {
+    limit  = 100
+    period = "DAY"
+  }
+}
