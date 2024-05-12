@@ -1,4 +1,5 @@
 resource "aws_iam_role" "lambda_role" {
+  name = "DiscordBotRole"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
@@ -16,6 +17,7 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role_policy" "s3_access" {
+  name = "DiscordBotS3Access"
   role   = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17"
@@ -34,6 +36,7 @@ resource "aws_iam_role_policy" "s3_access" {
 }
 
 resource "aws_iam_role_policy" "dynamodb_access" {
+  name = "DiscordBotDynamoDBAccess"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -54,6 +57,7 @@ resource "aws_iam_role_policy" "dynamodb_access" {
 }
 
 resource "aws_iam_role_policy" "ssm_parameter_access" {
+  name = "DiscordBotSSMAccess"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
