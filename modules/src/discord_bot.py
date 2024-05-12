@@ -54,6 +54,11 @@ HEVY_HEADER = {
 
 
 def lambda_handler(event, context):
+    response = asyncio.run(lambda_async_handler(event))
+    return response
+
+
+async def lambda_async_handler(event):
     if not verify_call(event):
         return
 
@@ -63,8 +68,9 @@ def lambda_handler(event, context):
     if request_type == RESPONSE_TYPES['PONG']:
         return PONG_RESPONSE
     elif request_type == RESPONSE_TYPES['ACK_NO_SOURCE']:
-        asyncio.run(command_handler(body))
+        task = asyncio.create_task(command_handler(body))
         print('After async')
+        await task
         return COMMAND_ACCEPTED
     else:
         return UNHANDLED_RESPONSE
@@ -87,7 +93,7 @@ def verify_call(event) -> bool:
         return False
 
 
-async def fetch_recent_workouts() -> str:
+def fetch_recent_workouts() -> str:
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(
         Name='/926728314305/latest-workout-index'
@@ -140,7 +146,7 @@ async def fetch_recent_workouts() -> str:
         )
 
 
-async def print_latest_workout() -> str:
+def print_latest_workout() -> str:
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(
         Name='/926728314305/latest-workout-index'
@@ -197,9 +203,9 @@ async def command_handler(body):
     if command == 'bleb':
         print('bleb')
     elif command == "fetch_workouts":
-        await asyncio.create_task(fetch_recent_workouts())
+        fetch_recent_workouts()
     elif command == 'print_latest_workout':
-        await asyncio.create_task(print_latest_workout())
+        print_latest_workout()
     else:
         print('no bleb')
 
