@@ -1,6 +1,5 @@
 import json
 from datetime import datetime
-import asyncio
 
 import requests
 from nacl.signing import VerifyKey
@@ -37,7 +36,7 @@ COMMAND_ACCEPTED = {
     'body': json.dumps({
         'type': 4,
         'data': {
-            'content': 'Jest an async test',
+            'content': 'Command accepted. The webhook will come to you with the response.',
         }
     })
 }
@@ -54,11 +53,6 @@ HEVY_HEADER = {
 
 
 def lambda_handler(event, context):
-    response = asyncio.run(lambda_async_handler(event))
-    return response
-
-
-async def lambda_async_handler(event):
     if not verify_call(event):
         return
 
@@ -68,9 +62,7 @@ async def lambda_async_handler(event):
     if request_type == RESPONSE_TYPES['PONG']:
         return PONG_RESPONSE
     elif request_type == RESPONSE_TYPES['ACK_NO_SOURCE']:
-        task = asyncio.create_task(command_handler(body))
-        print('After async')
-        await task
+        command_handler(body)
         return COMMAND_ACCEPTED
     else:
         return UNHANDLED_RESPONSE
@@ -93,7 +85,7 @@ def verify_call(event) -> bool:
         return False
 
 
-def fetch_recent_workouts() -> str:
+def fetch_recent_workouts() -> None:
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(
         Name='/926728314305/latest-workout-index'
@@ -146,7 +138,7 @@ def fetch_recent_workouts() -> str:
         )
 
 
-def print_latest_workout() -> str:
+def print_latest_workout() -> None:
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(
         Name='/926728314305/latest-workout-index'
@@ -197,8 +189,7 @@ def print_latest_workout() -> str:
     )
 
 
-async def command_handler(body):
-    print('during async')
+def command_handler(body):
     command = body['data']['name']
     if command == 'bleb':
         print('bleb')
