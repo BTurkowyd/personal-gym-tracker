@@ -1,3 +1,5 @@
+# The network is not used at all in the entire configuration. But I keep it as a placeholder for my future work,
+# as I might try to set up a tiny EC2 instance with Postgres.
 resource "aws_vpc" "workouts_vpc" {
   cidr_block = "10.0.0.0/16"
 

@@ -12,6 +12,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
   ip_protocol       = "-1" # semantically equivalent to all ports
 }
 
+# This ingres rule limits the access only from my own IP (which is dynamic, thus it is not hardcoded)
 resource "aws_vpc_security_group_ingress_rule" "postgres_port" {
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.ec2_pg_sg.id
@@ -20,6 +21,7 @@ resource "aws_vpc_security_group_ingress_rule" "postgres_port" {
   cidr_ipv4 = "${chomp(data.http.myip.response_body)}/32"
 }
 
+# This ingress rule is for the instance connect only.
 resource "aws_vpc_security_group_ingress_rule" "ssh_port" {
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.ec2_pg_sg.id
