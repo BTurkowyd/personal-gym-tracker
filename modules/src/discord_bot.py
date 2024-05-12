@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+import asyncio
 
 import requests
 from nacl.signing import VerifyKey
@@ -9,6 +10,7 @@ from pprint import pprint
 import boto3
 
 PUBLIC_KEY = os.environ.get('DISCORD_APP_PUBLIC_KEY')
+DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK')
 
 RESPONSE_TYPES = {
     "PONG": 1,
@@ -28,6 +30,16 @@ PONG_RESPONSE = {
 UNHANDLED_RESPONSE = {
     'statusCode': 400,
     'body': json.dumps('unhandled request type')
+}
+
+COMMAND_ACCEPTED = {
+    'statusCode': 200,
+    'body': json.dumps({
+        'type': 4,
+        'data': {
+            'content': 'Jest an async test',
+        }
+    })
 }
 
 HEVY_HEADER = {
@@ -51,7 +63,9 @@ def lambda_handler(event, context):
     if request_type == RESPONSE_TYPES['PONG']:
         return PONG_RESPONSE
     elif request_type == RESPONSE_TYPES['ACK_NO_SOURCE']:
-        return command_handler(body)
+        asyncio.run(command_handler(body))
+        print('After async')
+        return COMMAND_ACCEPTED
     else:
         return UNHANDLED_RESPONSE
 
@@ -73,7 +87,7 @@ def verify_call(event) -> bool:
         return False
 
 
-def fetch_recent_workouts() -> str:
+async def fetch_recent_workouts() -> str:
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(
         Name='/926728314305/latest-workout-index'
@@ -89,7 +103,11 @@ def fetch_recent_workouts() -> str:
 
     if len(workouts) == 0:
         print('No workouts to fetch since the last update.')
-        return 'No workouts to fetch since the last update.'
+
+        send_message(
+            message='No workouts to fetch since the last update.',
+            webhook_url=DISCORD_WEBHOOK
+        )
     else:
         for w in workouts:
             workout_id = w['id']
@@ -115,10 +133,14 @@ def fetch_recent_workouts() -> str:
             register_file_in_dynamodb(table_name, item)
 
         update_latest_workout_parameter_store(workouts[-1]['index'])
-        return 'All missing workouts loaded.'
+
+        send_message(
+            message='All missing workouts loaded.',
+            webhook_url=DISCORD_WEBHOOK
+        )
 
 
-def print_latest_workout() -> str:
+async def print_latest_workout() -> str:
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(
         Name='/926728314305/latest-workout-index'
@@ -163,50 +185,23 @@ def print_latest_workout() -> str:
 
     message += f'https://hevy.com/workout/{workout_json["id"]}\n'
 
-    return message
+    send_message(
+        message=message,
+        webhook_url=DISCORD_WEBHOOK
+    )
 
 
-def command_handler(body):
+async def command_handler(body):
+    print('during async')
     command = body['data']['name']
     if command == 'bleb':
         print('bleb')
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'type': 4,
-                'data': {
-                    'content': 'Hello, World.',
-                }
-            })
-        }
     elif command == "fetch_workouts":
-        fetching_response = fetch_recent_workouts()
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'type': 4,
-                'data': {
-                    'content': fetching_response,
-                }
-            })
-        }
+        await asyncio.create_task(fetch_recent_workouts())
     elif command == 'print_latest_workout':
-        fetching_response = print_latest_workout()
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'type': 4,
-                'data': {
-                    'content': fetching_response,
-                }
-            })
-        }
+        await asyncio.create_task(print_latest_workout())
     else:
         print('no bleb')
-        return {
-            'statusCode': 400,
-            'body': json.dumps('unhandled command')
-        }
 
 
 def upload_file_to_s3(file_path, bucket_name, body):
@@ -238,3 +233,11 @@ def update_latest_workout_parameter_store(latest_workout_index: int) -> None:
         Type='String',
         Overwrite=True
     )
+
+
+def send_message(message: str, webhook_url: str) -> None:
+    message_dict = {"content": message}
+    try:
+        response = requests.post(webhook_url, json=message_dict)
+    except Exception as e:
+        print(e)

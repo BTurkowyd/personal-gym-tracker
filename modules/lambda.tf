@@ -42,6 +42,7 @@ resource "aws_lambda_function" "discord_bot" {
       BUCKET_NAME = aws_s3_bucket.upload_bucket.bucket,
       DYNAMODB_TABLE_NAME = aws_dynamodb_table.workouts_table.name
       DISCORD_APP_PUBLIC_KEY = local.envs["DISCORD_APP_PUBLIC_KEY"]
+      DISCORD_WEBHOOK = local.envs["DISCORD_WEBHOOK"]
     }
   }
 }
