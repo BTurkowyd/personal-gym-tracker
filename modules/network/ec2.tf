@@ -13,7 +13,7 @@ resource "aws_instance" "postgres" {
     sudo systemctl enable docker
 
     sudo docker pull postgres:alpine
-    sudo docker run --name my-postgres -e POSTGRES_PASSWORD=${local.envs["DB_PASSWORD"]} -p 5432:5432 -d postgres:alpine
+    sudo docker run --name my-postgres -e POSTGRES_PASSWORD=${var.envs["DB_PASSWORD"]} -p 5432:5432 -d postgres:alpine
   EOF
 
   tags = {
