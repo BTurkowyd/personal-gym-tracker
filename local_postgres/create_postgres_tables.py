@@ -8,7 +8,7 @@ load_dotenv('discord_bot/.env')
 password = os.environ.get('DB_PASSWORD')
 
 # Create a PostgreSQL engine
-engine = create_engine(f'postgresql://postgres:{password}@3.73.128.85:5432/postgres')
+engine = create_engine(f'postgresql://postgres:password@0.0.0.0:5432/postgres')
 
 # Create a metadata instance
 metadata = MetaData()
