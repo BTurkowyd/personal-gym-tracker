@@ -1,90 +1,108 @@
-import os
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, Float
+from sqlalchemy.orm import relationship, declarative_base
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey, Float
-from dotenv import load_dotenv
+Base = declarative_base()
 
-load_dotenv('discord_bot/.env')
 
-password = os.environ.get('DB_PASSWORD')
+class User(Base):
+    __tablename__ = 'users'
 
-# Create a PostgreSQL engine
-engine = create_engine(f'postgresql://postgres:password@0.0.0.0:5432/postgres')
+    user_id = Column(String, primary_key=True)
+    username = Column(String)
+    profile_image = Column(String)
+    verified = Column(Boolean)
 
-# Create a metadata instance
-metadata = MetaData()
 
-# Define tables
-users = Table('users', metadata,
-              Column('user_id', String, primary_key=True),
-              Column('username', String),
-              Column('profile_image', String),
-              Column('verified', String)
-              )
+class Routine(Base):
+    __tablename__ = 'routines'
 
-routines = Table('routines', metadata,
-                 Column('routine_id', String, primary_key=True),
-                 Column('name', String),
-                 Column('description', String),
-                 Column('created_at', String),
-                 Column('updated_at', String),
-                 Column('user_id', String, ForeignKey('users.user_id'))
-                 )
+    routine_id = Column(String, primary_key=True)
+    name = Column(String)
+    description = Column(String)
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
+    user_id = Column(String, ForeignKey('users.user_id'))
+    user = relationship("User")
 
-workouts = Table('workouts', metadata,
-                 Column('workout_id', String, primary_key=True),
-                 Column('id', String),
-                 Column('short_id', String),
-                 Column('index', Integer),
-                 Column('name', String),
-                 Column('description', String),
-                 Column('start_time', Integer),
-                 Column('end_time', Integer),
-                 Column('created_at', String),
-                 Column('updated_at', String),
-                 Column('routine_id', String, ForeignKey('routines.routine_id'))
-                 )
 
-exercises = Table('exercises', metadata,
-                  Column('exercise_id', String, primary_key=True),
-                  Column('id', String),
-                  Column('title', String),
-                  Column('es_title', String),
-                  Column('de_title', String),
-                  Column('fr_title', String),
-                  Column('it_title', String),
-                  Column('pt_title', String),
-                  Column('ko_title', String),
-                  Column('ja_title', String),
-                  Column('tr_title', String),
-                  Column('ru_title', String),
-                  Column('zh_cn_title', String),
-                  Column('zh_tw_title', String),
-                  Column('superset_id', String),
-                  Column('rest_seconds', Integer),
-                  Column('notes', String),
-                  Column('url', String),
-                  Column('exercise_type', String),
-                  Column('equipment_category', String),
-                  Column('media_type', String),
-                  Column('custom_exercise_image_url', String),
-                  Column('custom_exercise_image_thumbnail_url', String),
-                  Column('thumbnail_url', String),
-                  Column('muscle_group', String),
-                  Column('priority', Integer)
-                  )
+class Workout(Base):
+    __tablename__ = 'workouts'
 
-sets = Table('sets', metadata,
-             Column('set_id', Integer, primary_key=True),
-             Column('exercise_id', String, ForeignKey('exercises.exercise_id')),
-             Column('workout_id', String, ForeignKey('workouts.workout_id')),
-             Column('index', Integer),
-             Column('indicator', String),
-             Column('weight_kg', Float),
-             Column('reps', Integer),
-             Column('distance_meters', Float),
-             Column('duration_seconds', Float),
-             Column('rpe', String)
-             )
+    workout_id = Column(String, primary_key=True)
+    id = Column(String)
+    short_id = Column(String)
+    index = Column(Integer)
+    start_time = Column(Integer)
+    end_time = Column(Integer)
+    routine_id = Column(String, ForeignKey('routines.routine_id'))
+    apple_watch = Column(Boolean)
+    wearos_watch = Column(Boolean)
+    user_id = Column(String, ForeignKey('users.user_id'))
+    nth_workout = Column(Integer)
+    like_count = Column(Integer)
+    is_liked_by_user = Column(Boolean)
+    is_private = Column(Boolean)
+    like_images = Column(String)
+    comment_count = Column(Integer)
+    media = Column(String)
+    image_urls = Column(String)
+    estimated_volume_kg = Column(Float)
 
-# Create tables in the database
-metadata.create_all(engine)
+
+class Exercise(Base):
+    __tablename__ = 'exercises'
+
+    exercise_id = Column(String, primary_key=True)
+    workout_id = Column(String, ForeignKey('workouts.workout_id'))
+    title = Column(String)
+    es_title = Column(String)
+    de_title = Column(String)
+    fr_title = Column(String)
+    it_title = Column(String)
+    pt_title = Column(String)
+    ko_title = Column(String)
+    ja_title = Column(String)
+    tr_title = Column(String)
+    ru_title = Column(String)
+    zh_cn_title = Column(String)
+    zh_tw_title = Column(String)
+    superset_id = Column(String)
+    rest_seconds = Column(Integer)
+    notes = Column(String)
+    exercise_template_id = Column(String)
+    url = Column(String)
+    exercise_type = Column(String)
+    equipment_category = Column(String)
+    media_type = Column(String)
+    custom_exercise_image_url = Column(String)
+    custom_exercise_image_thumbnail_url = Column(String)
+    muscle_group = Column(String)
+    priority = Column(Integer)
+
+
+class Set(Base):
+    __tablename__ = 'sets'
+
+    set_id = Column(Integer, primary_key=True)
+    exercise_id = Column(String, ForeignKey('exercises.exercise_id'))
+    index = Column(Integer)
+    indicator = Column(String)
+    weight_kg = Column(Float)
+    reps = Column(Integer)
+    distance_meters = Column(Float)
+    duration_seconds = Column(Integer)
+    rpe = Column(Float)
+
+
+class PersonalRecord(Base):
+    __tablename__ = 'personal_records'
+
+    pr_id = Column(Integer, primary_key=True)
+    set_id = Column(Integer, ForeignKey('sets.set_id'))
+    type = Column(String)
+    value = Column(Float)
+
+
+# Create engine and tables
+engine = create_engine('postgresql://postgres:password@localhost:5432/postgres')
+Base.metadata.create_all(engine)
