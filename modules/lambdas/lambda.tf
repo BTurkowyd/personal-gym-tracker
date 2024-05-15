@@ -38,11 +38,7 @@ resource "aws_lambda_function" "discord_bot" {
 
   environment {
     variables = {
-      HEVY_TOKEN = var.local_envs["HEVY_TOKEN"]
-      BUCKET_NAME = var.upload_bucket_name
-      DYNAMODB_TABLE_NAME = var.dynamo_workouts_table_name
       DISCORD_APP_PUBLIC_KEY = var.local_envs["DISCORD_APP_PUBLIC_KEY"]
-      DISCORD_WEBHOOK = var.local_envs["DISCORD_WEBHOOK"]
       SNS_TOPIC_ARN = aws_sns_topic.pass_request.arn
     }
   }
@@ -78,6 +74,9 @@ resource "aws_lambda_function" "test_lambda" {
   environment {
     variables = {
       DISCORD_WEBHOOK = var.local_envs["DISCORD_WEBHOOK"]
+      HEVY_TOKEN = var.local_envs["HEVY_TOKEN"]
+      BUCKET_NAME = var.upload_bucket_name
+      DYNAMODB_TABLE_NAME = var.dynamo_workouts_table_name
     }
   }
 }
