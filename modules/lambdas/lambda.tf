@@ -59,14 +59,14 @@ resource "aws_lambda_permission" "api_gw" {
   source_arn = "${var.api_gateway_exec_arn}/*/*"
 }
 
-resource "aws_lambda_function" "test_lambda" {
-  function_name = "TestLambda"
+resource "aws_lambda_function" "hevy_api_caller" {
+  function_name = "HevyAPICaller"
   role          = var.lambda_role_arn
   source_code_hash = data.archive_file.discord_bot.output_base64sha256
-  handler       = "test_lambda.lambda_handler"
+  handler       = "hevy_api_caller.lambda_handler"
   runtime = "python3.11"
   timeout = 900
-  filename      = "${path.module}/src/test_lambda.zip"
+  filename      = "${path.module}/src/hevy_api_caller.zip"
   layers = [
     aws_lambda_layer_version.python_requests.arn,
   ]
@@ -81,16 +81,16 @@ resource "aws_lambda_function" "test_lambda" {
   }
 }
 
-data "archive_file" "test_lambda" {
+data "archive_file" "hevy_api_caller" {
     type        = "zip"
-  source_file = "${path.module}/src/test_lambda.py"
-  output_path = "${path.module}/src/test_lambda.zip"
+  source_file = "${path.module}/src/hevy_api_caller.py"
+  output_path = "${path.module}/src/hevy_api_caller.zip"
 }
 
 resource "aws_lambda_permission" "invoke_lambda_by_sns" {
   statement_id  = "AllowExecutionFromSNS"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.test_lambda.function_name
+  function_name = aws_lambda_function.hevy_api_caller.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pass_request.arn
 }

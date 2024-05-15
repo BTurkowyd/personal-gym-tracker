@@ -16,7 +16,7 @@ resource "aws_sns_topic_policy" "sns_" {
 }
 
 resource "aws_sns_topic_subscription" "subscription" {
-  endpoint  = aws_lambda_function.test_lambda.arn
+  endpoint  = aws_lambda_function.hevy_api_caller.arn
   protocol  = "lambda"
   topic_arn = aws_sns_topic.pass_request.arn
 }
