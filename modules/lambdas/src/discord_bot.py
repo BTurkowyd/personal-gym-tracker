@@ -10,6 +10,7 @@ import boto3
 
 PUBLIC_KEY = os.environ.get('DISCORD_APP_PUBLIC_KEY')
 DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK')
+SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
 
 RESPONSE_TYPES = {
     "PONG": 1,
@@ -192,6 +193,7 @@ def print_latest_workout() -> None:
 def command_handler(body):
     command = body['data']['name']
     if command == 'bleb':
+        publish_to_sns(command, SNS_TOPIC_ARN)
         print('bleb')
     elif command == "fetch_workouts":
         fetch_recent_workouts()
@@ -238,3 +240,13 @@ def send_message(message: str, webhook_url: str) -> None:
         response = requests.post(webhook_url, json=message_dict)
     except Exception as e:
         print(e)
+
+
+def publish_to_sns(message: str, sns_topic_arn: str):
+    sns = boto3.client('sns')
+    response = sns.publish(
+        TopicArn=sns_topic_arn,
+        Message=message
+    )
+
+    print(response)
