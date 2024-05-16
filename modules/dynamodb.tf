@@ -7,30 +7,6 @@ resource "aws_dynamodb_table" "workouts_table" {
     name = "index"
     type = "N"
   }
-#   attribute {
-#     name = "name"
-#     type = "S"
-#   }
-#   attribute {
-#     name = "routine_id"
-#     type = "S"
-#   }
-#   attribute {
-#     name = "id"
-#     type = "S"
-#   }
-#   attribute {
-#     name = "nth_workout"
-#     type = "N"
-#   }
-#   attribute {
-#     name = "start_time"
-#     type = "N"
-#   }
-#   attribute {
-#     name = "bucket_location"
-#     type = "S"
-#   }
 }
 
 resource "random_id" "dynamodb_suffix" {
