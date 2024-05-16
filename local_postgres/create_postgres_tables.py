@@ -13,18 +13,6 @@ class User(Base):
     verified = Column(Boolean)
 
 
-class Routine(Base):
-    __tablename__ = 'routines'
-
-    routine_id = Column(String, primary_key=True)
-    name = Column(String)
-    description = Column(String)
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
-    user_id = Column(String, ForeignKey('users.user_id'))
-    user = relationship("User")
-
-
 class Workout(Base):
     __tablename__ = 'workouts'
 
@@ -34,7 +22,6 @@ class Workout(Base):
     index = Column(Integer)
     start_time = Column(Integer)
     end_time = Column(Integer)
-    routine_id = Column(String, ForeignKey('routines.routine_id'))
     apple_watch = Column(Boolean)
     wearos_watch = Column(Boolean)
     user_id = Column(String, ForeignKey('users.user_id'))

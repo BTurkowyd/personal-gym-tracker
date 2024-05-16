@@ -1,7 +1,7 @@
 import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from create_postgres_tables import User, Routine, Workout, Exercise, Set, PersonalRecord  # Import your SQLAlchemy models
+from create_postgres_tables import User, Workout, Exercise, Set, PersonalRecord  # Import your SQLAlchemy models
 
 # Read JSON file
 with open('/Users/bartoszturkowyd/Projects/aws/silka/local_testing/E952F27A-F613-40C8-A776-4858C1656DD9.json', 'r') as f:
@@ -15,9 +15,8 @@ session = Session()
 # Define function to convert JSON data to SQLAlchemy objects and commit to database
 def commit_to_database(data):
     # Extract data
-    routine_data = data.get('routine_data', {})
-    workout_data = data.get('workout_data', {})
-    exercises_data = data.get('exercises_data', {})
+    workout_data = data
+    exercises_data = data.get('exercises', {})
 
     # Add user to database
     user = User(
@@ -28,18 +27,7 @@ def commit_to_database(data):
     )
     session.add(user)
 
-    # Add routine to database
-    routine = Routine(
-        routine_id=data['routine_id'],
-        name=data['name'],
-        description=data['description'],
-        created_at=data['created_at'],
-        updated_at=data['updated_at'],
-        user_id=data['user_id']
-    )
-    session.add(routine)
-
-    # Add workout to database
+    # # Add workout to database
     workout = Workout(
         workout_id=data['id'],
         id=data['id'],
@@ -47,7 +35,6 @@ def commit_to_database(data):
         index=data['index'],
         start_time=data['start_time'],
         end_time=data['end_time'],
-        routine_id=data['routine_id'],
         apple_watch=data['apple_watch'],
         wearos_watch=data['wearos_watch'],
         user_id=data['user_id'],
@@ -63,11 +50,12 @@ def commit_to_database(data):
     )
     session.add(workout)
 
-    # Add exercises and sets to database
+    # Add exercises and sets to database.
+    # todo: exercises need workouts to be already in the table, thus you can't do it on a single commit!
     for exercise_data in exercises_data:
         exercise = Exercise(
-            exercise_id=exercise_data['exercise_id'],
-            workout_id=workout_data['workout_id'],
+            exercise_id='test',
+            workout_id='test',
             title=exercise_data['title'],
             es_title=exercise_data['es_title'],
             de_title=exercise_data['de_title'],
@@ -97,7 +85,7 @@ def commit_to_database(data):
 
         for set_data in exercise_data['sets']:
             set_ = Set(
-                exercise_id=exercise_data['exercise_id'],
+                exercise_id=exercise_data['id'],
                 index=set_data['index'],
                 indicator=set_data['indicator'],
                 weight_kg=set_data['weight_kg'],
