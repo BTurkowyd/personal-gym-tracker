@@ -1,5 +1,5 @@
 locals {
-  envs = { for tuple in regexall("(.*?)=(.*)", file(".env")) : tuple[0] => tuple[1] }
+  envs = { for tuple in regexall("(.*?)=(.*)", file(var.env_file)) : tuple[0] => tuple[1] }
 }
 
 data "external" "get_git_branch" {
