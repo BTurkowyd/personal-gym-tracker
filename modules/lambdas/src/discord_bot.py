@@ -11,6 +11,8 @@ DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK')
 SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
 OTP_RANDOM_KEY = os.environ.get('OTP_RANDOM_KEY')
 
+totp = pyotp.TOTP(OTP_RANDOM_KEY)
+
 RESPONSE_TYPES = {
     "PONG": 1,
     "ACK_NO_SOURCE": 2,
@@ -62,8 +64,12 @@ def lambda_handler(event, context):
     if request_type == RESPONSE_TYPES['PONG']:
         return PONG_RESPONSE
     elif request_type == RESPONSE_TYPES['ACK_NO_SOURCE']:
-        command = body['data']['name']
-        publish_to_sns(command, SNS_TOPIC_ARN)
+        options = body['data']['options']
+        otp = [o['value'] for o in options if o['name'] == 'otp']
+
+        if totp.verify(*otp):
+            command = body['data']['name']
+            publish_to_sns(command, SNS_TOPIC_ARN)
         return COMMAND_ACCEPTED
     else:
         return UNHANDLED_RESPONSE

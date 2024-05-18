@@ -35,7 +35,7 @@ In the [I was inspired by section](#i-was-inspired-by) I linked a several resour
    - As a positive side effect, I have an AWS Lambda compatible `PyNaCl` layer which deserves its own repo for others who would like to use it. 
 2. Not unexpectedly, all these tutorials are shown only in AWS console and are not using any infrastructure as code (IaC) approach. I simply wanted to have a nice and clean system design. 
 3. In my opinion these tutorials which are recommending using API Gateway are missing one, very important piece of information, which caused me to spend one evening to solve the problem. 
-   - In these tutorials they suggest that setting up an API Gateway (either HTTP or REST) with default settings will do the job. It is only 50% correct.
+   - In these tutorials they suggest that setting up an API Gateway (either HTTP or REST) with default settings will do the job. It is only 50% correct. This is correct as long as you create that resource via AWS console browser.
    - While sending a request which was triggering the AWS Lambda bot and it was executing the code as expected, it was not returning the response to the Discord application despite having the return value set properly.
    - The missing piece of puzzle was method response setting in the REST API (see [here](https://github.com/BTurkowyd/silka/blob/main/modules/api_gateway.tf#L18)). After setting it to `application/json` response model, the API Gateway was able to return the response further to the Discord application.
    - So to summarize: it has to be the REST API and it needs a response model to be set up to `application/json`.
