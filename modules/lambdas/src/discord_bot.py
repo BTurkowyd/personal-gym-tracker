@@ -1,7 +1,5 @@
 import json
-from datetime import datetime
-
-import requests
+import pyotp
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 import os
@@ -11,6 +9,7 @@ import boto3
 PUBLIC_KEY = os.environ.get('DISCORD_APP_PUBLIC_KEY')
 DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK')
 SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
+OTP_RANDOM_KEY = os.environ.get('OTP_RANDOM_KEY')
 
 RESPONSE_TYPES = {
     "PONG": 1,
