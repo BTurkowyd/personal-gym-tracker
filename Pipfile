@@ -9,6 +9,8 @@ requests = "==2.31.0"
 python-dotenv = "*"
 pynacl = "*"
 sqlalchemy = "==2.0.30"
+pyotp = "==2.9.0"
+qrcode = "==7.4.2"
 
 [dev-packages]
 
