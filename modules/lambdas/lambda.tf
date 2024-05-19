@@ -26,16 +26,9 @@ data "archive_file" "all_workouts" {
 resource "aws_lambda_function" "discord_bot" {
   function_name = "DiscordBotWorkouts"
   role          = var.lambda_role_arn
-  source_code_hash = data.archive_file.discord_bot.output_base64sha256
-  handler       = "discord_bot.lambda_handler"
-  runtime = "python3.11"
+  package_type = "Image"
+  image_uri = "${data.aws_ecr_repository.discord_bot_repo.repository_url}:latest"
   timeout = 900
-  filename      = "${path.module}/src/discord_bot.zip"
-  layers = [
-    aws_lambda_layer_version.python_requests.arn,
-    aws_lambda_layer_version.pynacl.arn,
-    aws_lambda_layer_version.pyotp.arn
-  ]
 
   environment {
     variables = {
@@ -44,12 +37,6 @@ resource "aws_lambda_function" "discord_bot" {
       OTP_RANDOM_KEY = var.local_envs["OTP_RANDOM_KEY"]
     }
   }
-}
-
-data "archive_file" "discord_bot" {
-    type        = "zip"
-  source_file = "${path.module}/src/discord_bot.py"
-  output_path = "${path.module}/src/discord_bot.zip"
 }
 
 resource "aws_lambda_permission" "api_gw" {
@@ -64,14 +51,9 @@ resource "aws_lambda_permission" "api_gw" {
 resource "aws_lambda_function" "hevy_api_caller" {
   function_name = "HevyAPICaller"
   role          = var.lambda_role_arn
-  source_code_hash = data.archive_file.discord_bot.output_base64sha256
-  handler       = "hevy_api_caller.lambda_handler"
-  runtime = "python3.11"
+  package_type = "Image"
+  image_uri = "${data.aws_ecr_repository.hevy_api_caller_repo.repository_url}:latest"
   timeout = 900
-  filename      = "${path.module}/src/hevy_api_caller.zip"
-  layers = [
-    aws_lambda_layer_version.python_requests.arn,
-  ]
 
   environment {
     variables = {
@@ -81,12 +63,6 @@ resource "aws_lambda_function" "hevy_api_caller" {
       DYNAMODB_TABLE_NAME = var.dynamo_workouts_table_name
     }
   }
-}
-
-data "archive_file" "hevy_api_caller" {
-    type        = "zip"
-  source_file = "${path.module}/src/hevy_api_caller.py"
-  output_path = "${path.module}/src/hevy_api_caller.zip"
 }
 
 resource "aws_lambda_permission" "invoke_lambda_by_sns" {
