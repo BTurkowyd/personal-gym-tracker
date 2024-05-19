@@ -98,7 +98,8 @@ def lambda_fetch_workouts(event, context):
             'nth_workout': {'N': str(w['nth_workout'])},
             'start_time': {'N': str(w['start_time'])},
             'bucket_name': {'S': bucket_name},
-            'key': {'S': file_path}
+            'key': {'S': file_path},
+            'workout_day': {'S': datetime.fromtimestamp(w['start_time']).strftime('%Y-%m-%d')}
 
         }
 
