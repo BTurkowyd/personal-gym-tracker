@@ -23,8 +23,16 @@ module "lambdas" {
   lambda_role_arn = aws_iam_role.lambda_role.arn
   upload_bucket_name = aws_s3_bucket.upload_bucket.bucket
   local_envs = local.envs
+  discord_bot_ecr_repo_name = aws_ecr_repository.discord_bot_ecr.name
+  hevy_api_caller_repo_name = aws_ecr_repository.hevy_api_caller.name
 }
 
 module "discord_bot" {
   source = "./docker_discord_bot/"
+  account_id = data.aws_caller_identity.current.account_id
+}
+
+module "hevy_api_caller" {
+  source = "./docker_hevy_api_caller"
+  account_id = data.aws_caller_identity.current.account_id
 }
