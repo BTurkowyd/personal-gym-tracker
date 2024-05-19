@@ -5,7 +5,7 @@ resource "aws_dynamodb_table" "workouts_table" {
 
   attribute {
     name = "index"
-    type = "N"
+    type = "S"
   }
   attribute {
     name = "workout_day"

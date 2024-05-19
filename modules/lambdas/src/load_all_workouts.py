@@ -39,7 +39,7 @@ def update_latest_workout_parameter_store(table_name: str) -> None:
 
     indexes = []
     for item in items:
-        indexes.append(int(item['index']['N']))
+        indexes.append(int(item['index']['S']))
 
     latest_workout_index = max(indexes)
 
