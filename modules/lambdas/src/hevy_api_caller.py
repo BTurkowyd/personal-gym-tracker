@@ -42,6 +42,9 @@ def command_handler(command):
         fetch_recent_workouts()
     elif command == 'print_latest_workout':
         print_latest_workout()
+    elif command == 'print_workout':
+        pass # todo: dynamoDB needs a modification. A date column (string) which will be a global secondary index.
+    # Alternatively, scan the bucket for the path, but this might be more costly than a dynamoDB query
     else:
         print('no bleb')
 
