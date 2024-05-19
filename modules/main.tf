@@ -24,3 +24,7 @@ module "lambdas" {
   upload_bucket_name = aws_s3_bucket.upload_bucket.bucket
   local_envs = local.envs
 }
+
+module "discord_bot" {
+  source = "./docker_discord_bot/"
+}
