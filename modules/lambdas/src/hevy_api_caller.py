@@ -62,7 +62,8 @@ def fetch_recent_workouts() -> None:
     bucket_name = os.environ.get('BUCKET_NAME')
     table_name = os.environ.get('DYNAMODB_TABLE_NAME')
 
-    response = requests.get(f'https://api.hevyapp.com/workouts_batch/{str(latest_workout_index+1)}', headers=HEVY_HEADER)
+    response = requests.get(f'https://api.hevyapp.com/workouts_batch/{str(latest_workout_index + 1)}',
+                            headers=HEVY_HEADER)
     workouts = response.json()
 
     if len(workouts) == 0:
@@ -120,9 +121,12 @@ def print_latest_workout() -> None:
 
 
 def print_workout(date: str) -> None:
-    item = query_dynamodb('workout_day', date, 'WorkoutsTableWorkoutsDayGSI-vebHVZG9-DRTXQehc6pqJg')
-    workout_json = get_s3_object(item['bucket_name']['S'], item['key']['S'])
-    message = format_workout_message(workout_json)
+    try:
+        item = query_dynamodb('workout_day', date, 'WorkoutsTableWorkoutsDayGSI-vebHVZG9-DRTXQehc6pqJg')
+        workout_json = get_s3_object(item['bucket_name']['S'], item['key']['S'])
+        message = format_workout_message(workout_json)
+    except:
+        message = "You didn't workout on that day, you lazy potato."
 
     send_message(
         message=message,
@@ -170,14 +174,14 @@ def get_parameter(name: str) -> str:
 def query_dynamodb(column_name: str, value: str, index_name: str = None) -> dict:
     key_condition_expression = f'#{column_name} = :v1'
     expression_attribute_names = {
-                f'#{column_name}': column_name,
-                '#key': 'key'
-            }
+        f'#{column_name}': column_name,
+        '#key': 'key'
+    }
     expression_attribute_values = {
-                ':v1': {
-                    'S': value,
-                },
-            }
+        ':v1': {
+            'S': value,
+        },
+    }
 
     print(key_condition_expression)
     print(expression_attribute_names)
