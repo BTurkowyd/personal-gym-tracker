@@ -69,7 +69,17 @@ def lambda_handler(event, context):
 
         if totp.verify(*otp):
             command = body['data']['name']
-            publish_to_sns(command, SNS_TOPIC_ARN)
+
+            if command != 'print_workout':
+                message = {'command': command}
+                publish_to_sns(message, SNS_TOPIC_ARN)
+            else:
+                date = [o['value'] for o in options if o['name'] == 'date']
+                message = {
+                    'command': command,
+                    'date': date[0]
+                }
+                publish_to_sns(message, SNS_TOPIC_ARN)
         return COMMAND_ACCEPTED
     else:
         return UNHANDLED_RESPONSE
@@ -92,11 +102,11 @@ def verify_call(event) -> bool:
         return False
 
 
-def publish_to_sns(message: str, sns_topic_arn: str):
+def publish_to_sns(message: dict, sns_topic_arn: str):
     sns = boto3.client('sns')
     response = sns.publish(
         TopicArn=sns_topic_arn,
-        Message=message
+        Message=json.dumps(message)
     )
 
     print(response)

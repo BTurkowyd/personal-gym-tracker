@@ -49,7 +49,8 @@ resource "aws_iam_role_policy" "dynamodb_access" {
         "dynamodb:Query"
       ]
       Resource = [
-        aws_dynamodb_table.workouts_table.arn
+        aws_dynamodb_table.workouts_table.arn,
+        "${aws_dynamodb_table.workouts_table.arn}/index/*"
       ]
     }]
   })
