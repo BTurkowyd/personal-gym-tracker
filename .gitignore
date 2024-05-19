@@ -2,3 +2,5 @@
 /local_testing
 /side-scripts/discord_bot/.env
 /modules/.env
+/side-scripts/otp/.env
+/side-scripts/otp/QRCode.png

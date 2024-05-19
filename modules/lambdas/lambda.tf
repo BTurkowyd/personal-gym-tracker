@@ -33,13 +33,15 @@ resource "aws_lambda_function" "discord_bot" {
   filename      = "${path.module}/src/discord_bot.zip"
   layers = [
     aws_lambda_layer_version.python_requests.arn,
-    aws_lambda_layer_version.pynacl.arn
+    aws_lambda_layer_version.pynacl.arn,
+    aws_lambda_layer_version.pyotp.arn
   ]
 
   environment {
     variables = {
       DISCORD_APP_PUBLIC_KEY = var.local_envs["DISCORD_APP_PUBLIC_KEY"]
       SNS_TOPIC_ARN = aws_sns_topic.pass_request.arn
+      OTP_RANDOM_KEY = var.local_envs["OTP_RANDOM_KEY"]
     }
   }
 }

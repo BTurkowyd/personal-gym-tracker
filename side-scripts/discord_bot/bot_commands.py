@@ -14,17 +14,58 @@ json = [
   {
     'name': 'bleb',
     'description': 'Test command.',
-    'options': []
+    # option type 4 (integer)
+    'options': [
+      {
+        "name": "otp",
+        "description": "6-digit one time password for authentication",
+        "type": 4,
+        "required": True
+      }
+    ]
   },
   {
     'name': 'fetch_workouts',
     'description': 'Fetching missing workouts to the S3 bucket.',
-    'options': []
+    'options': [
+      {
+        "name": "otp",
+        "description": "6-digit one time password for authentication",
+        "type": 4,
+        "required": True
+      }
+    ]
   },
   {
     'name': 'print_latest_workout',
     'description': 'Print the latest workout',
-    'options': []
+    'options': [
+      {
+        "name": "otp",
+        "description": "6-digit one time password for authentication",
+        "type": 4,
+        "required": True
+      }
+    ]
+  },
+  {
+    'name': 'print_workout',
+    'description': 'print a particular workout',
+    'options': [
+      {
+        "name": "otp",
+        "description": "6-digit one time password for authentication",
+        "type": 4,
+        "required": True
+      },
+      {
+        "name": "date",
+        "description": "date in YYY-MM-DD format",
+        "type": 3,
+        "required": True
+      }
+    ]
+
   }
 ]
 
