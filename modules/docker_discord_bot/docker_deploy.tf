@@ -7,7 +7,7 @@ resource "null_resource" "docker_deploy" {
     command = <<EOT
       pwd
       aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 926728314305.dkr.ecr.eu-central-1.amazonaws.com
-      docker build -t discord-bot-lambda /Users/bartoszturkowyd/Projects/aws/silka/modules/docker_discord_bot/
+      docker build --platform linux/x86_64 -t discord-bot-lambda /Users/bartoszturkowyd/Projects/aws/silka/modules/docker_discord_bot/
       docker tag discord-bot-lambda:latest 926728314305.dkr.ecr.eu-central-1.amazonaws.com/discord-bot-lambda:latest
       docker push 926728314305.dkr.ecr.eu-central-1.amazonaws.com/discord-bot-lambda:latest
     EOT

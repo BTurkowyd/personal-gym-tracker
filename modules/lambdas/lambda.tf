@@ -26,16 +26,9 @@ data "archive_file" "all_workouts" {
 resource "aws_lambda_function" "discord_bot" {
   function_name = "DiscordBotWorkouts"
   role          = var.lambda_role_arn
-  source_code_hash = data.archive_file.discord_bot.output_base64sha256
-  handler       = "discord_bot.lambda_handler"
-  runtime = "python3.11"
+  package_type = "Image"
+  image_uri = "926728314305.dkr.ecr.eu-central-1.amazonaws.com/discord-bot-lambda:latest"
   timeout = 900
-  filename      = "${path.module}/src/discord_bot.zip"
-  layers = [
-    aws_lambda_layer_version.python_requests.arn,
-    aws_lambda_layer_version.pynacl.arn,
-    aws_lambda_layer_version.pyotp.arn
-  ]
 
   environment {
     variables = {
@@ -95,4 +88,20 @@ resource "aws_lambda_permission" "invoke_lambda_by_sns" {
   function_name = aws_lambda_function.hevy_api_caller.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pass_request.arn
+}
+
+resource "aws_lambda_function" "test_lambda_ecr" {
+  function_name = "TestLambdaFromECR"
+  role          = var.lambda_role_arn
+  package_type = "Image"
+  image_uri = "926728314305.dkr.ecr.eu-central-1.amazonaws.com/discord-bot-lambda:latest"
+#   architectures = ["arm64"]
+
+  environment {
+    variables = {
+      DISCORD_APP_PUBLIC_KEY = var.local_envs["DISCORD_APP_PUBLIC_KEY"]
+      SNS_TOPIC_ARN = aws_sns_topic.pass_request.arn
+      OTP_RANDOM_KEY = var.local_envs["OTP_RANDOM_KEY"]
+    }
+  }
 }
