@@ -10,6 +10,10 @@ packer {
 source "docker" "test_packer" {
   image = "public.ecr.aws/lambda/python:3.11"
   commit = true
+  platform = "linux/x86_64"
+  changes = [
+    "CMD [\"test_packer.lambda_handler\"]"
+  ]
 }
 
 build {
