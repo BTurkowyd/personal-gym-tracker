@@ -12,3 +12,8 @@ resource "aws_ecr_repository" "fetch_all_workouts" {
   name = "fetch-all-workouts"
   force_delete = true
 }
+
+resource "aws_ecr_repository" "test_packer" {
+  name = "test-packer"
+  force_delete = true
+}
