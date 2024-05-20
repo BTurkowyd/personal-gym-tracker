@@ -12,17 +12,17 @@ source "docker" "test_packer" {
   commit = true
   platform = "linux/x86_64"
   changes = [
-    "CMD [\"test_packer.lambda_handler\"]"
+    "CMD [\"${var.lambda_name}.lambda_handler\"]"
   ]
 }
 
 build {
-  name = "test_packer"
-  sources = ["source.docker.test_packer"]
+  name = var.lambda_name
+  sources = ["source.docker.${var.lambda_name}"]
 
   provisioner "file" {
-    source      = "./src/test_packer.py"
-    destination = "/var/task/test_packer.py"
+    source      = "./src/${var.lambda_name}.py"
+    destination = "/var/task/${var.lambda_name}.py"
   }
 
   provisioner "file" {
@@ -38,7 +38,7 @@ build {
 
   post-processors {
     post-processor "docker-tag" {
-	repository = "926728314305.dkr.ecr.eu-central-1.amazonaws.com/test-packer"
+	repository = "926728314305.dkr.ecr.eu-central-1.amazonaws.com/${var.ecr_repo_name}"
 	tags = ["latest"]
     }
 
@@ -49,4 +49,14 @@ build {
     login_server = "926728314305.dkr.ecr.eu-central-1.amazonaws.com"
     }
   }
+}
+
+variable "lambda_name" {
+  type = string
+  default = "test_packer"
+}
+
+variable "ecr_repo_name" {
+  type = string
+  default = "test-packer"
 }
