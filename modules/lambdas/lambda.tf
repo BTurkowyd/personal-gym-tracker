@@ -1,12 +1,9 @@
 resource "aws_lambda_function" "fetching_from_hevy" {
   function_name = "FetchAllWorkoutsFromHevy"
   role          = var.lambda_role_arn
-  source_code_hash = data.archive_file.all_workouts.output_base64sha256
-  handler       = "load_all_workouts.lambda_fetch_workouts"
-  runtime = "python3.11"
+  package_type = "Image"
+  image_uri = "${data.aws_ecr_repository.fetch_all_workouts_repo.repository_url}:latest"
   timeout = 900
-  filename      = "${path.module}/src/load_all_workouts.zip"
-  layers = [aws_lambda_layer_version.python_requests.arn]
 
   environment {
     variables = {
@@ -15,12 +12,6 @@ resource "aws_lambda_function" "fetching_from_hevy" {
       DYNAMODB_TABLE_NAME = var.dynamo_workouts_table_name
     }
   }
-}
-
-data "archive_file" "all_workouts" {
-  type        = "zip"
-  source_file = "${path.module}/src/load_all_workouts.py"
-  output_path = "${path.module}/src/load_all_workouts.zip"
 }
 
 resource "aws_lambda_function" "discord_bot" {
@@ -37,15 +28,6 @@ resource "aws_lambda_function" "discord_bot" {
       OTP_RANDOM_KEY = var.local_envs["OTP_RANDOM_KEY"]
     }
   }
-}
-
-resource "aws_lambda_permission" "api_gw" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.discord_bot.function_name
-  principal     = "apigateway.amazonaws.com"
-
-  source_arn = "${var.api_gateway_exec_arn}/*/*"
 }
 
 resource "aws_lambda_function" "hevy_api_caller" {
@@ -71,4 +53,13 @@ resource "aws_lambda_permission" "invoke_lambda_by_sns" {
   function_name = aws_lambda_function.hevy_api_caller.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pass_request.arn
+}
+
+resource "aws_lambda_permission" "api_gw" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.discord_bot.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${var.api_gateway_exec_arn}/*/*"
 }
