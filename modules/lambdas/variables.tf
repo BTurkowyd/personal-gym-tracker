@@ -29,3 +29,7 @@ variable "discord_bot_ecr_repo_name" {
 variable "hevy_api_caller_repo_name" {
   description = "The name of the ECR repository"
 }
+
+variable "fetch_all_workouts_repo_name" {
+  description = "The name of the ECR repository"
+}
