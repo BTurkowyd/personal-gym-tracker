@@ -21,12 +21,12 @@ build {
   sources = ["source.docker.image"]
 
   provisioner "file" {
-    source      = "./${var.lambda_name}/src/${var.lambda_name}.py"
+    source      = "./${var.lambda_name}/${var.lambda_name}.py"
     destination = "/var/task/${var.lambda_name}.py"
   }
 
   provisioner "file" {
-    source      = "./${var.lambda_name}/src/requirements.txt"
+    source      = "./${var.lambda_name}/requirements.txt"
     destination = "/requirements.txt"
   }
 

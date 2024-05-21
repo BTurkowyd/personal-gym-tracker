@@ -27,15 +27,3 @@ module "lambdas" {
   hevy_api_caller_repo_name = aws_ecr_repository.hevy_api_caller.name
   fetch_all_workouts_repo_name = aws_ecr_repository.fetch_all_workouts.name
 }
-
-module "discord_bot" {
-  source = "./lambda_ecr_images/discord_bot/"
-}
-
-module "hevy_api_caller" {
-  source = "./lambda_ecr_images/hevy_api_caller"
-}
-
-module "fetch_all_workouts" {
-  source = "./lambda_ecr_images/fetch_all_workouts/"
-}
