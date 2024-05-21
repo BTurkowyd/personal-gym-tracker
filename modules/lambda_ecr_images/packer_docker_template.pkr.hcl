@@ -7,7 +7,7 @@ packer {
   }
 }
 
-source "docker" "test_packer" {
+source "docker" "image" {
   image = "public.ecr.aws/lambda/python:3.11"
   commit = true
   platform = "linux/x86_64"
@@ -18,15 +18,15 @@ source "docker" "test_packer" {
 
 build {
   name = var.lambda_name
-  sources = ["source.docker.${var.lambda_name}"]
+  sources = ["source.docker.image"]
 
   provisioner "file" {
-    source      = "./src/${var.lambda_name}.py"
+    source      = "./${var.lambda_name}/src/${var.lambda_name}.py"
     destination = "/var/task/${var.lambda_name}.py"
   }
 
   provisioner "file" {
-    source      = "./src/requirements.txt"
+    source      = "./${var.lambda_name}/src/requirements.txt"
     destination = "/requirements.txt"
   }
 
@@ -53,10 +53,8 @@ build {
 
 variable "lambda_name" {
   type = string
-  default = "test_packer"
 }
 
 variable "ecr_repo_name" {
   type = string
-  default = "test-packer"
 }

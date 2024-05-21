@@ -29,19 +29,13 @@ module "lambdas" {
 }
 
 module "discord_bot" {
-  source = "./lambda_ecr_images/docker_discord_bot/"
-  account_id = data.aws_caller_identity.current.account_id
-  ecr_repo_name = aws_ecr_repository.discord_bot_ecr.name
+  source = "./lambda_ecr_images/discord_bot/"
 }
 
 module "hevy_api_caller" {
-  source = "./lambda_ecr_images/docker_hevy_api_caller"
-  account_id = data.aws_caller_identity.current.account_id
-  ecr_repo_name = aws_ecr_repository.hevy_api_caller.name
+  source = "./lambda_ecr_images/hevy_api_caller"
 }
 
 module "fetch_all_workouts" {
   source = "./lambda_ecr_images/fetch_all_workouts/"
-  account_id = data.aws_caller_identity.current.account_id
-  ecr_repo_name = aws_ecr_repository.fetch_all_workouts.name
 }
