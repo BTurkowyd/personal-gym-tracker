@@ -4,7 +4,7 @@ resource "aws_lambda_function" "fetching_from_hevy" {
   package_type = "Image"
   image_uri = "${data.aws_ecr_repository.fetch_all_workouts_repo.repository_url}:latest"
   timeout = 900
-  source_code_hash = data.aws_ecr_image.fetch_all_latest_image.id
+  source_code_hash = split(":", data.aws_ecr_image.fetch_all_latest_image.id)[1]
 
   environment {
     variables = {
@@ -21,7 +21,7 @@ resource "aws_lambda_function" "discord_bot" {
   package_type = "Image"
   image_uri = "${data.aws_ecr_repository.discord_bot_repo.repository_url}:latest"
   timeout = 900
-  source_code_hash = data.aws_ecr_image.discord_bot_latest_image.id
+  source_code_hash = split(":", data.aws_ecr_image.discord_bot_latest_image.id)[1]
 
   environment {
     variables = {
@@ -38,7 +38,7 @@ resource "aws_lambda_function" "hevy_api_caller" {
   package_type = "Image"
   image_uri = "${data.aws_ecr_repository.hevy_api_caller_repo.repository_url}:latest"
   timeout = 900
-  source_code_hash = data.aws_ecr_image.hevy_api_caller_latest_image.id
+  source_code_hash = split(":", data.aws_ecr_image.hevy_api_caller_latest_image.id)[1]
 
   environment {
     variables = {
