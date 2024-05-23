@@ -85,7 +85,7 @@ def fetch_recent_workouts() -> None:
             upload_file_to_s3(file_path, bucket_name, body)
 
             item = {
-                'index': {'N': str(w['index'])},
+                'index': {'S': str(w['index'])},
                 'name': {'S': w['name']},
                 'id': {'S': w['id']},
                 'nth_workout': {'N': str(w['nth_workout'])},
