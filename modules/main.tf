@@ -23,4 +23,7 @@ module "lambdas" {
   lambda_role_arn = aws_iam_role.lambda_role.arn
   upload_bucket_name = aws_s3_bucket.upload_bucket.bucket
   local_envs = local.envs
+  discord_bot_ecr_repo_name = aws_ecr_repository.discord_bot_ecr.name
+  hevy_api_caller_repo_name = aws_ecr_repository.hevy_api_caller.name
+  fetch_all_workouts_repo_name = aws_ecr_repository.fetch_all_workouts.name
 }
