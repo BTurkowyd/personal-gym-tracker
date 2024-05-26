@@ -1,12 +1,10 @@
 resource "aws_lambda_function" "fetching_from_hevy" {
   function_name = "FetchAllWorkoutsFromHevy"
   role          = var.lambda_role_arn
-  source_code_hash = data.archive_file.all_workouts.output_base64sha256
-  handler       = "load_all_workouts.lambda_fetch_workouts"
-  runtime = "python3.11"
+  package_type = "Image"
+  image_uri = "${data.aws_ecr_repository.fetch_all_workouts_repo.repository_url}:latest"
   timeout = 900
-  filename      = "${path.module}/src/load_all_workouts.zip"
-  layers = [aws_lambda_layer_version.python_requests.arn]
+  source_code_hash = split(":", data.aws_ecr_image.fetch_all_latest_image.id)[1]
 
   environment {
     variables = {
@@ -17,25 +15,13 @@ resource "aws_lambda_function" "fetching_from_hevy" {
   }
 }
 
-data "archive_file" "all_workouts" {
-  type        = "zip"
-  source_file = "${path.module}/src/load_all_workouts.py"
-  output_path = "${path.module}/src/load_all_workouts.zip"
-}
-
 resource "aws_lambda_function" "discord_bot" {
   function_name = "DiscordBotWorkouts"
   role          = var.lambda_role_arn
-  source_code_hash = data.archive_file.discord_bot.output_base64sha256
-  handler       = "discord_bot.lambda_handler"
-  runtime = "python3.11"
+  package_type = "Image"
+  image_uri = "${data.aws_ecr_repository.discord_bot_repo.repository_url}:latest"
   timeout = 900
-  filename      = "${path.module}/src/discord_bot.zip"
-  layers = [
-    aws_lambda_layer_version.python_requests.arn,
-    aws_lambda_layer_version.pynacl.arn,
-    aws_lambda_layer_version.pyotp.arn
-  ]
+  source_code_hash = split(":", data.aws_ecr_image.discord_bot_latest_image.id)[1]
 
   environment {
     variables = {
@@ -46,32 +32,13 @@ resource "aws_lambda_function" "discord_bot" {
   }
 }
 
-data "archive_file" "discord_bot" {
-    type        = "zip"
-  source_file = "${path.module}/src/discord_bot.py"
-  output_path = "${path.module}/src/discord_bot.zip"
-}
-
-resource "aws_lambda_permission" "api_gw" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.discord_bot.function_name
-  principal     = "apigateway.amazonaws.com"
-
-  source_arn = "${var.api_gateway_exec_arn}/*/*"
-}
-
 resource "aws_lambda_function" "hevy_api_caller" {
   function_name = "HevyAPICaller"
   role          = var.lambda_role_arn
-  source_code_hash = data.archive_file.discord_bot.output_base64sha256
-  handler       = "hevy_api_caller.lambda_handler"
-  runtime = "python3.11"
+  package_type = "Image"
+  image_uri = "${data.aws_ecr_repository.hevy_api_caller_repo.repository_url}:latest"
   timeout = 900
-  filename      = "${path.module}/src/hevy_api_caller.zip"
-  layers = [
-    aws_lambda_layer_version.python_requests.arn,
-  ]
+  source_code_hash = split(":", data.aws_ecr_image.hevy_api_caller_latest_image.id)[1]
 
   environment {
     variables = {
@@ -83,16 +50,19 @@ resource "aws_lambda_function" "hevy_api_caller" {
   }
 }
 
-data "archive_file" "hevy_api_caller" {
-    type        = "zip"
-  source_file = "${path.module}/src/hevy_api_caller.py"
-  output_path = "${path.module}/src/hevy_api_caller.zip"
-}
-
 resource "aws_lambda_permission" "invoke_lambda_by_sns" {
   statement_id  = "AllowExecutionFromSNS"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.hevy_api_caller.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pass_request.arn
+}
+
+resource "aws_lambda_permission" "api_gw" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.discord_bot.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${var.api_gateway_exec_arn}/*/*"
 }

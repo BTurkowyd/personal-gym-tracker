@@ -5,7 +5,17 @@ resource "aws_dynamodb_table" "workouts_table" {
 
   attribute {
     name = "index"
-    type = "N"
+    type = "S"
+  }
+  attribute {
+    name = "workout_day"
+    type = "S"
+  }
+
+  global_secondary_index {
+    hash_key        = "workout_day"
+    name            = "WorkoutsTableWorkoutsDayGSI-${random_id.dynamodb_suffix.b64_url}"
+    projection_type = "ALL"
   }
 }
 
