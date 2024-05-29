@@ -62,62 +62,75 @@ def fetch_recent_workouts() -> None:
     bucket_name = os.environ.get('BUCKET_NAME')
     table_name = os.environ.get('DYNAMODB_TABLE_NAME')
 
-    response = requests.get(f'https://api.hevyapp.com/workouts_batch/{str(latest_workout_index + 1)}',
-                            headers=HEVY_HEADER)
-    workouts = response.json()
+    try:
+        response = requests.get(f'https://api.hevyapp.com/workouts_batch/{str(latest_workout_index + 1)}',
+                                headers=HEVY_HEADER)
+        workouts = response.json()
 
-    if len(workouts) == 0:
-        print('No workouts to fetch since the last update.')
+        if len(workouts) == 0:
+            print('No workouts to fetch since the last update.')
 
+            send_message(
+                message='No workouts to fetch since the last update.',
+                webhook_url=DISCORD_WEBHOOK
+            )
+        else:
+            for w in workouts:
+                workout_id = w['id']
+                timestamp = str(datetime.fromtimestamp(w['start_time']))
+                year, month, day = timestamp.split(' ')[0].split('-')
+
+                file_path = f'sorted_workouts/{year}/{month}/{day}/{workout_id}.json'
+                body = bytes(json.dumps(w).encode('UTF-8'))
+
+                upload_file_to_s3(file_path, bucket_name, body)
+
+                item = {
+                    'index': {'S': str(w['index'])},
+                    'name': {'S': w['name']},
+                    'id': {'S': w['id']},
+                    'nth_workout': {'N': str(w['nth_workout'])},
+                    'start_time': {'N': str(w['start_time'])},
+                    'bucket_name': {'S': bucket_name},
+                    'key': {'S': file_path},
+                    'workout_day': {'S': datetime.fromtimestamp(w['start_time']).strftime('%Y-%m-%d')}
+
+                }
+
+                register_file_in_dynamodb(table_name, item)
+
+            update_latest_workout_parameter_store(workouts[-1]['index'])
+
+            send_message(
+                message='All missing workouts loaded.',
+                webhook_url=DISCORD_WEBHOOK
+            )
+
+    except Exception as e:
         send_message(
-            message='No workouts to fetch since the last update.',
-            webhook_url=DISCORD_WEBHOOK
-        )
-    else:
-        for w in workouts:
-            workout_id = w['id']
-            timestamp = str(datetime.fromtimestamp(w['start_time']))
-            year, month, day = timestamp.split(' ')[0].split('-')
-
-            file_path = f'sorted_workouts/{year}/{month}/{day}/{workout_id}.json'
-            body = bytes(json.dumps(w).encode('UTF-8'))
-
-            upload_file_to_s3(file_path, bucket_name, body)
-
-            item = {
-                'index': {'S': str(w['index'])},
-                'name': {'S': w['name']},
-                'id': {'S': w['id']},
-                'nth_workout': {'N': str(w['nth_workout'])},
-                'start_time': {'N': str(w['start_time'])},
-                'bucket_name': {'S': bucket_name},
-                'key': {'S': file_path},
-                'workout_day': {'S': datetime.fromtimestamp(w['start_time']).strftime('%Y-%m-%d')}
-
-            }
-
-            register_file_in_dynamodb(table_name, item)
-
-        update_latest_workout_parameter_store(workouts[-1]['index'])
-
-        send_message(
-            message='All missing workouts loaded.',
+            message=f'Looks like something went wrong:\n\n{e}',
             webhook_url=DISCORD_WEBHOOK
         )
 
 
 def print_latest_workout() -> None:
-    latest_workout_index = get_parameter('/926728314305/latest-workout-index')
-    item = query_dynamodb('index', latest_workout_index)
+    try:
+        latest_workout_index = get_parameter('/926728314305/latest-workout-index')
+        item = query_dynamodb('index', latest_workout_index)
 
-    workout_json = get_s3_object(item['bucket_name']['S'], item['key']['S'])
+        workout_json = get_s3_object(item['bucket_name']['S'], item['key']['S'])
 
-    message = format_workout_message(workout_json)
+        message = format_workout_message(workout_json)
 
-    send_message(
-        message=message,
-        webhook_url=DISCORD_WEBHOOK
-    )
+        send_message(
+            message=message,
+            webhook_url=DISCORD_WEBHOOK
+        )
+    except Exception as e:
+        send_message(
+            message=f'Looks like something went wrong:\n\n{e}',
+            webhook_url=DISCORD_WEBHOOK
+        )
 
 
 def print_workout(date: str) -> None:
@@ -125,13 +138,16 @@ def print_workout(date: str) -> None:
         item = query_dynamodb('workout_day', date, 'WorkoutsTableWorkoutsDayGSI-vebHVZG9-DRTXQehc6pqJg')
         workout_json = get_s3_object(item['bucket_name']['S'], item['key']['S'])
         message = format_workout_message(workout_json)
-    except:
-        message = "You didn't workout on that day, you lazy potato."
 
-    send_message(
-        message=message,
-        webhook_url=DISCORD_WEBHOOK
-    )
+        send_message(
+            message=message,
+            webhook_url=DISCORD_WEBHOOK
+        )
+    except Exception as e:
+        send_message(
+            message=f'Looks like something went wrong:\n\n{e}',
+            webhook_url=DISCORD_WEBHOOK
+        )
 
 
 def upload_file_to_s3(file_path, bucket_name, body):
@@ -183,10 +199,6 @@ def query_dynamodb(column_name: str, value: str, index_name: str = None) -> dict
         },
     }
 
-    print(key_condition_expression)
-    print(expression_attribute_names)
-    print(expression_attribute_values)
-
     if index_name:
         dynamodb = boto3.client('dynamodb')
         response = dynamodb.query(
@@ -223,6 +235,7 @@ def format_workout_message(workout_json: dict) -> str:
     message = ''
     for e in workout_json['exercises']:
         message += f'{e["title"]}\n'
+        message += f'Notes: {e["notes"]}\n'
         for s in e['sets']:
             message += f'Weight: {s["weight_kg"]} kg, reps: {s["reps"]}\n'
         message += '------------------\n'
