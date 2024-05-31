@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, String
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from create_tables import Workout
