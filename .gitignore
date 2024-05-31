@@ -4,3 +4,4 @@
 /modules/.env
 /side-scripts/otp/.env
 /side-scripts/otp/QRCode.png
+/local_postgres/.env
