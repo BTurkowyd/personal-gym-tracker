@@ -4,10 +4,12 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: superset_postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -18,14 +20,16 @@ services:
   superset:
     image: apache/superset:latest
     container_name: superset
+    env_file:
+      - .env
     environment:
       SUPERSET_ENV: production
       SUPERSET_LOAD_EXAMPLES: "no"
-      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
-      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+      SUPERSET_SECRET_KEY: "${SUPERSET_SECRET_KEY}"
+      SQLALCHEMY_DATABASE_URI: "${SQLALCHEMY_DATABASE_URI}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION}"
     volumes:
       - superset_home:/app/superset_home
     ports:
