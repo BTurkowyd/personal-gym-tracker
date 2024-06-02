@@ -35,11 +35,11 @@ resource "aws_glue_catalog_table" "workouts_table" {
     }
     columns {
       name = "start_time"
-      type = "bigint"
+      type = "timestamp"
     }
     columns {
       name = "end_time"
-      type = "bigint"
+      type = "timestamp"
     }
     columns {
       name = "created_at"
