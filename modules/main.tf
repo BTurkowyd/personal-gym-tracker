@@ -9,3 +9,11 @@ module "lambdas" {
   hevy_api_caller_repo_name = aws_ecr_repository.hevy_api_caller.name
   fetch_all_workouts_repo_name = aws_ecr_repository.fetch_all_workouts.name
 }
+
+
+module "athena" {
+  source = "./athena/"
+  bucket_suffix = lower(random_id.bucket_suffix.b64_url)
+  caller_identity_id = data.aws_caller_identity.current.account_id
+  data_bucket = aws_s3_bucket.upload_bucket.bucket
+}
