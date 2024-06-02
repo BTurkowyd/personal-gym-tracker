@@ -1,5 +1,5 @@
 resource "aws_glue_catalog_table" "users_table" {
-
+  # todo: this table will be completely changed
   database_name = aws_athena_database.athena_workouts_database.name
   name          = "users_${var.caller_identity_id}"
   table_type = "EXTERNAL_TABLE"
