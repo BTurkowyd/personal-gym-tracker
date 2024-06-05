@@ -13,32 +13,50 @@ resource "aws_iam_policy" "superset_policy" {
       {
         Effect = "Allow",
         Action = [
-          "athena:StartQueryExecution",
-          "athena:StopQueryExecution",
-          "athena:GetQueryResults",
-          "athena:GetQueryExecution",
-          "athena:BatchGetQueryExecution"
+        "athena:BatchGetNamedQuery",
+        "athena:BatchGetQueryExecution",
+        "athena:GetNamedQuery",
+        "athena:GetQueryExecution",
+        "athena:GetQueryResults",
+        "athena:GetQueryResultsStream",
+        "athena:GetWorkGroup",
+        "athena:ListDatabases",
+        "athena:ListDataCatalogs",
+        "athena:ListNamedQueries",
+        "athena:ListQueryExecutions",
+        "athena:ListTagsForResource",
+        "athena:ListWorkGroups",
+        "athena:ListTableMetadata",
+        "athena:StartQueryExecution",
+        "athena:StopQueryExecution",
+        "athena:CreatePreparedStatement",
+        "athena:DeletePreparedStatement",
+        "athena:GetPreparedStatement"
         ],
-        Resource = ["*"]
+        Resource = "*"
       },
       {
+        Sid = "DataBucketReadAccess"
         Effect = "Allow",
         Action = [
           "s3:ListBucket",
           "s3:GetObject",
-          "s3:PutObject"
+          "s3:GetBucketLocation"
         ],
         Resource = [
           var.data_bucket_arn,
-          "${var.data_bucket_arn}/*",
-          var.athena_bucket_arn,
-          "${var.athena_bucket_arn}/*",
+          "${var.data_bucket_arn}/*"
         ]
       },
       {
+        Sid = "AthenaResultsBucket"
         Effect = "Allow",
         Action = [
-          "s3:*"
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:AbortMultipartUpload",
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
         ],
         Resource = [
           var.athena_bucket_arn,
@@ -48,14 +66,17 @@ resource "aws_iam_policy" "superset_policy" {
       {
         Effect = "Allow",
         Action = [
+          "glue:BatchGetPartition",
           "glue:GetDatabase",
           "glue:GetDatabases",
+          "glue:GetPartition",
+          "glue:GetPartitions",
           "glue:GetTable",
           "glue:GetTables",
-          "glue:GetPartition",
-          "glue:GetPartitions"
+          "glue:GetTableVersion",
+          "glue:GetTableVersions"
         ],
-        Resource = ["*"]
+        Resource = "*"
       }
     ]
   })
