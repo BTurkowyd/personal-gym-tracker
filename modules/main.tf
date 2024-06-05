@@ -17,3 +17,9 @@ module "athena" {
   caller_identity_id = data.aws_caller_identity.current.account_id
   data_bucket = aws_s3_bucket.upload_bucket.bucket
 }
+
+module "superset" {
+  source = "./superset-user/"
+  athena_bucket_arn = module.athena.athena_bucket_arn
+  data_bucket_arn = aws_s3_bucket.upload_bucket.arn
+}
