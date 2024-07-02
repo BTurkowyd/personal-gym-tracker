@@ -4,6 +4,7 @@ from diagrams.aws.network import APIGateway
 from diagrams.aws.integration import SNS
 from diagrams.onprem.client import Client
 from diagrams.onprem.analytics import Superset
+from diagrams.onprem.database import PostgreSQL
 from diagrams.aws.storage import S3
 from diagrams.aws.database import Dynamodb
 from diagrams.aws.analytics import Glue, Athena
@@ -14,7 +15,7 @@ graph_attr = {
 }
 
 with Diagram("Infrastructure", show=False):
-    hevy_server = Client('Hevy server')
+    hevy_server = PostgreSQL('Hevy Backend DB')
     superset = Superset('Superset')
     api_gateway = APIGateway('Bot endpoint')
 
