@@ -1,21 +1,26 @@
-from diagrams import Diagram, Cluster
+from diagrams import Diagram, Cluster, Edge
 from diagrams.aws.compute import Lambda
 from diagrams.aws.network import APIGateway
 from diagrams.aws.integration import SNS
 from diagrams.onprem.client import Client
+from diagrams.onprem.analytics import Superset
 from diagrams.aws.storage import S3
 from diagrams.aws.database import Dynamodb
 from diagrams.aws.analytics import Glue, Athena
 
+graph_attr = {
+    "bgcolor": "transparent",    # Set background color to transparent
+    "style": "dotted, bold"
+}
+
 with Diagram("Infrastructure", show=False):
     hevy_server = Client('Hevy server')
-    superset = Client('Superset/Local computer')
+    superset = Superset('Superset')
+    api_gateway = APIGateway('Bot endpoint')
 
-    with Cluster("AWS Account"):
-        api_gateway = APIGateway('Bot endpoint')
+    with Cluster("AWS Account", direction='LR', graph_attr=graph_attr):
         bot = Lambda('Discord bot')
         sns = SNS("SNS")
-
         glue = Glue('Workout database')
         athena = Athena('Workout SQL executor')
 
@@ -27,17 +32,19 @@ with Diagram("Infrastructure", show=False):
             s3 = S3('Workouts file storage')
             dynamodb = Dynamodb('Workouts table')
 
-        api_gateway >> bot >> sns >> [fetch_all, hevy_api_caller]
-        fetch_all >> [s3, dynamodb]
-        hevy_api_caller >> [s3, dynamodb]
+        bot >> sns >> [fetch_all, hevy_api_caller]
+        fetch_all >> Edge(color='#00AA33') >> s3
+        fetch_all >> Edge(color='#0033FF') >> dynamodb
+        hevy_api_caller >> Edge(color='#00AA33') >> s3
+        hevy_api_caller >> Edge(color='#0033FF') >> dynamodb
         s3 >> glue >> athena
-        # sns >> fetch_all
-        # sns >> hevy_api_caller
 
-    [fetch_all, hevy_api_caller] >> hevy_server
-    hevy_server >> [fetch_all, hevy_api_caller]
+    api_gateway >> bot
+    bot >> api_gateway
+    [fetch_all, hevy_api_caller] >> Edge(style='dotted, bold') >> hevy_server
+    hevy_server >> Edge(style='dotted, bold') >> [fetch_all, hevy_api_caller]
     athena >> superset
-    superset >> [api_gateway, athena]
+    superset >> athena
 
 
 
