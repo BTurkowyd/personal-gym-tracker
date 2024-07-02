@@ -1,5 +1,7 @@
 # A simple discord bot using AWS resources (almost free).
 
+![infrastructure_diagram](./side-scripts/infrastructure-diagram/infrastructure.png)
+
 ## Prerequisites:
 1. Own Discord server where you can set up and test your bot application. https://discordpy.readthedocs.io/en/stable/discord.html. There you will get a few authorization values such as `APPLICATION ID`, `PUBLIC KEY` in the `General information` section and `TOKEN` in the `Bot` section which have to be stored in `.env` files mention in point 5.
 2. AWS account with an IAM user account which has access keys generated (programmatic access): https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html?icmpid=docs_iam_console#Using_CreateAccessKey. This is required for `terraform`.
