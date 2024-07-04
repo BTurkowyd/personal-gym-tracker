@@ -1,7 +1,7 @@
 locals {
   region = "eu-central-1"
   bucket = "terraform-states-6mabw3s4smjiozsqyi76rq"
-  key = "terraform/${path_relative_to_include()}/terraform.tfstate"
+  key = "terraform/silka/${path_relative_to_include()}/terraform.tfstate"
   profile = "cdk-dev"
 }
 
@@ -38,8 +38,8 @@ generate "backend" {
     contents = <<-EOT
 terraform {
   backend "s3" {
-    bucket = "terraform-states-6mabw3s4smjiozsqyi76rq"
-    key    = "projects/silka"
+    bucket = "${local.bucket}"
+    key    = "${local.key}"
     region = "${local.region}"
   }
 }
