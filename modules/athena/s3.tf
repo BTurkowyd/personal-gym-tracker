@@ -6,7 +6,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "lifecycle_policy" {
     bucket = aws_s3_bucket.athena_queries.bucket
 
     rule {
-        id     = "older_than_90_days"
+        id     = "older_than_180_days"
         status = "Enabled"
 
         expiration {
