@@ -13,6 +13,12 @@ resource "aws_instance" "superset" {
     host = self.public_ip
   }
 
+  # Upload necessary files
+  provisioner "file" {
+    source      = "/Users/bartoszturkowyd/Projects/aws/silka/modules/superset_instance/docker/"
+    destination = "/home/ubuntu"
+  }
+
   provisioner "remote-exec" {
     inline = [
       "sudo apt-get update -y",
@@ -21,12 +27,6 @@ resource "aws_instance" "superset" {
       "sudo curl -L \"https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose",
       "sudo chmod +x /usr/local/bin/docker-compose"
     ]
-  }
-
-  # Upload necessary files
-  provisioner "file" {
-    source      = "/Users/bartoszturkowyd/Projects/aws/silka/modules/superset_instance/docker/"
-    destination = "/home/ubuntu"
   }
 
   # Run Docker Compose
