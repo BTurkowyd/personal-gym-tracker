@@ -1,9 +1,10 @@
 resource "aws_instance" "superset" {
   ami = "ami-01e444924a2233b07"
-  instance_type = "t3.nano"
+  instance_type = "t3.micro"
   vpc_security_group_ids = [aws_security_group.ec2_pg_sg.id]
   associate_public_ip_address = true
   subnet_id = aws_subnet.public_a.id
+  key_name = aws_key_pair.superset_ec2_pubkey.key_name
 
   connection {
     type = "ssh"
@@ -24,23 +25,8 @@ resource "aws_instance" "superset" {
 
   # Upload necessary files
   provisioner "file" {
-    source      = "modules/superset_instance/docker/docker-compose.yml"
-    destination = "/home/ubuntu/docker-compose.yml"
-  }
-
-  provisioner "file" {
-    source      = "modules/superset_instance/docker/.env"
-    destination = "/home/ubuntu/.env"
-  }
-
-  provisioner "file" {
-    source      = "modules/superset_instance/docker/superset/superset_config.py"
-    destination = "/home/ubuntu/superset/superset_config.py"
-  }
-
-  provisioner "file" {
-    source      = "modules/superset_instance/docker/superset/.env"
-    destination = "/home/ubuntu/superset/.env"
+    source      = "/Users/bartoszturkowyd/Projects/aws/silka/modules/superset_instance/docker/"
+    destination = "/home/ubuntu"
   }
 
   # Run Docker Compose
@@ -54,4 +40,10 @@ resource "aws_instance" "superset" {
   tags = {
     Name = "Superset"
   }
+}
+
+
+resource "aws_key_pair" "superset_ec2_pubkey" {
+  key_name = "superset-ec2-pubkey"
+  public_key = file("~/.ssh/superset-ec2.pub")
 }
