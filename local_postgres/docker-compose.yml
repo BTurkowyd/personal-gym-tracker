@@ -53,7 +53,7 @@ services:
     command: >
       bash -c "
       python -m pip install pyathena &&
-      superset fab create-admin --username ${SUPERSET_ADMIN_USER} --firstname Superset --lastname Admin --email admin@superset.com --password ${SUPERSET_ADMIN_PWD} && 
+      superset fab create-admin --username ${SUPERSET_ADMIN_USER} --firstname Superset --lastname Admin --email admin@superset.com --password ${SUPERSET_ADMIN_PWD} &&
       superset db upgrade &&
       superset init &&
       superset run -h 0.0.0.0 -p 8088

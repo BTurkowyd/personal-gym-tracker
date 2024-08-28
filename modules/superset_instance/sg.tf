@@ -29,8 +29,24 @@ resource "aws_vpc_security_group_ingress_rule" "https_port" {
   cidr_ipv4 = "${chomp(data.http.myip.response_body)}/32"
 }
 
-# This ingress rule is for the instance connect only.
+resource "aws_vpc_security_group_ingress_rule" "superset_port" {
+  ip_protocol       = "tcp"
+  security_group_id = aws_security_group.ec2_pg_sg.id
+  from_port = 8088
+  to_port = 8088
+  cidr_ipv4 = "${chomp(data.http.myip.response_body)}/32"
+}
+
 resource "aws_vpc_security_group_ingress_rule" "ssh_port" {
+  ip_protocol       = "tcp"
+  security_group_id = aws_security_group.ec2_pg_sg.id
+  from_port = 22
+  to_port = 22
+  cidr_ipv4 = "${chomp(data.http.myip.response_body)}/32"
+}
+
+# This ingress rule is for the instance connect only.
+resource "aws_vpc_security_group_ingress_rule" "instant_connect" {
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.ec2_pg_sg.id
   from_port = 22
