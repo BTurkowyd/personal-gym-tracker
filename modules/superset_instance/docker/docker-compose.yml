@@ -39,8 +39,6 @@ services:
       SUPERSET_SECRET_KEY: "${SUPERSET_SECRET_KEY}"
       SQLALCHEMY_DATABASE_URI: "${SQLALCHEMY_DATABASE_URI}"
       SUPERSET_CONFIG_PATH: "/app/superset_config.py"
-      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
-      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION}"
     volumes:
       - superset_home:/app/superset_home
@@ -53,7 +51,7 @@ services:
     command: >
       bash -c "
       python -m pip install pyathena &&
-      superset fab create-admin --username ${SUPERSET_ADMIN_USER} --firstname Superset --lastname Admin --email admin@superset.com --password ${SUPERSET_ADMIN_PWD} &&
+      superset fab create-admin --username ${SUPERSET_ADMIN_USER} --firstname Superset --lastname Admin --email admin@superset.com --password ${SUPERSET_ADMIN_PWD} && 
       superset db upgrade &&
       superset init &&
       superset run -h 0.0.0.0 -p 8088

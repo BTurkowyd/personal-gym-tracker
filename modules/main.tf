@@ -18,8 +18,12 @@ module "athena" {
   data_bucket = aws_s3_bucket.upload_bucket.bucket
 }
 
-module "superset" {
+module "superset_user" {
   source = "./superset-user/"
   athena_bucket_arn = module.athena.athena_bucket_arn
   data_bucket_arn = aws_s3_bucket.upload_bucket.arn
+}
+
+module "superset_instance" {
+  source  = "./superset_instance"
 }
