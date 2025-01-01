@@ -14,9 +14,7 @@
 2. Be sure that the IAM user with the programmatic access is active:
    - You can check it by executing the following command: `aws configure list`. The output should show the user profile name, access key and secret key (both keys are hidden).
    - If that is not the case, execute the following command: `export AWS_PROFILE='profile-name'`
-3. In terminal go to `./modules`
-4. Execute the following command `terraform apply`. Then you have to confirm by typing in `yes` in the terminal. You can auto-confirm it by executing `terraform apply -auto-approve`.
-5. Infrastructure is set up.
+3. In `Makefile` in the root repository folder, you can find a few commands which are simplifying the process of setting up the infrastructure.
 
 ## Setting an interaction endpoint URL in Discord Application.
 1. In the AWS console go to `API Gateway`, select the API you created.
