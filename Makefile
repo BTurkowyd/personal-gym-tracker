@@ -1,36 +1,36 @@
+# Default deployment stage (can be overridden by setting STAGE=prod, etc.)
 STAGE ?= dev
 
-# pushes all lambdas to ECR and applies the terraform
+# Build and push all Lambda Docker images to ECR, then apply Terraform with Terragrunt.
 push-all:
-	cd modules/lambdas && \
-	packer build -var 'lambda_name=fetch_all_workouts' -var 'ecr_repo_name=fetch-all-workouts' ./packer_docker_template.pkr.hcl && \
-	packer build -var 'lambda_name=discord_bot' -var 'ecr_repo_name=discord-bot-lambda' ./packer_docker_template.pkr.hcl && \
-	packer build -var 'lambda_name=hevy_api_caller' -var 'ecr_repo_name=hevy-api-caller' ./packer_docker_template.pkr.hcl && \
-	cd ../../environments/$(STAGE) && \
-	terragrunt apply
+    cd modules/lambdas && \
+    packer build -var 'lambda_name=fetch_all_workouts' -var 'ecr_repo_name=fetch-all-workouts' ./packer_docker_template.pkr.hcl && \
+    packer build -var 'lambda_name=discord_bot' -var 'ecr_repo_name=discord-bot-lambda' ./packer_docker_template.pkr.hcl && \
+    packer build -var 'lambda_name=hevy_api_caller' -var 'ecr_repo_name=hevy-api-caller' ./packer_docker_template.pkr.hcl && \
+    cd ../../environments/$(STAGE) && \
+    terragrunt apply
 
-# pushes the fetch all workouts lambda to ECR and applies the terraform
+# Build and push only the fetch_all_workouts Lambda image, then apply Terraform.
 push-fetch-all-workouts:
-	cd modules/lambdas && \
-	packer build -var 'lambda_name=fetch_all_workouts' -var 'ecr_repo_name=fetch-all-workouts' ./packer_docker_template.pkr.hcl && \
-	cd ../../environments/$(STAGE) && \
-	terragrunt apply
+    cd modules/lambdas && \
+    packer build -var 'lambda_name=fetch_all_workouts' -var 'ecr_repo_name=fetch-all-workouts' ./packer_docker_template.pkr.hcl && \
+    cd ../../environments/$(STAGE) && \
+    terragrunt apply
 
-# pushes the discord bot lambda to ECR and applies the terraform
+# Build and push only the discord_bot Lambda image, then apply Terraform.
 push-discord-bot:
-	cd modules/lambdas && \
-	packer build -var 'lambda_name=discord_bot' -var 'ecr_repo_name=discord-bot-lambda' ./packer_docker_template.pkr.hcl && \
-	cd ../../environments/$(STAGE) && \
-	terragrunt apply
+    cd modules/lambdas && \
+    packer build -var 'lambda_name=discord_bot' -var 'ecr_repo_name=discord-bot-lambda' ./packer_docker_template.pkr.hcl && \
+    cd ../../environments/$(STAGE) && \
+    terragrunt apply
 
-# pushes the hevy api caller lambda to ECR and applies the terraform
+# Build and push only the hevy_api_caller Lambda image, then apply Terraform.
 push-hevy-api-caller:
-	cd modules/lambdas && \
-	packer build -var 'lambda_name=hevy_api_caller' -var 'ecr_repo_name=hevy-api-caller' ./packer_docker_template.pkr.hcl && \
-	cd ../../environments/$(STAGE) && \
-	terragrunt apply
+    cd modules/lambdas && \
+    packer build -var 'lambda_name=hevy_api_caller' -var 'ecr_repo_name=hevy-api-caller' ./packer_docker_template.pkr.hcl && \
+    cd ../../environments/$(STAGE) && \
+    terragrunt apply
 
-# applies the terraform
+# Only apply Terraform (no Docker builds).
 apply:
-	cd environments/$(STAGE) && \
-	terragrunt apply
+    cd environments/$(STAGE)

@@ -20,6 +20,7 @@
 # development environments. Also note that superset_config_docker.py is imported
 # as a final step as a means to override "defaults" configured here
 #
+
 import logging
 import os
 
@@ -28,13 +29,16 @@ from flask_caching.backends.filesystemcache import FileSystemCache
 
 logger = logging.getLogger()
 
+# Redis connection settings for caching and Celery
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 REDIS_CELERY_DB = os.getenv("REDIS_CELERY_DB", "0")
 REDIS_RESULTS_DB = os.getenv("REDIS_RESULTS_DB", "1")
 
+# Configure SQL Lab results backend to use local filesystem cache
 RESULTS_BACKEND = FileSystemCache("/app/superset_home/sqllab")
 
+# Configure general cache to use Redis
 CACHE_CONFIG = {
     "CACHE_TYPE": "RedisCache",
     "CACHE_DEFAULT_TIMEOUT": 86400,
@@ -48,6 +52,11 @@ FILTER_STATE_CACHE_CONFIG = CACHE_CONFIG
 
 
 class CeleryConfig:
+    """
+    Configuration for Celery task queue used by Superset.
+    - Sets Redis as broker and backend.
+    - Schedules periodic tasks for reports.
+    """
     broker_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"
     imports = ("superset.sql_lab",)
     result_backend = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}"
@@ -67,18 +76,18 @@ class CeleryConfig:
 
 CELERY_CONFIG = CeleryConfig
 
+# Enable feature flags for alerting and reporting
 FEATURE_FLAGS = {"ALERT_REPORTS": True}
 ALERT_REPORTS_NOTIFICATION_DRY_RUN = True
-WEBDRIVER_BASEURL = "http://superset:8088/"  # When using docker compose baseurl should be http://superset_app:8088/
-# The base URL for the email report hyperlinks.
+
+# Base URL for Selenium WebDriver (used for screenshots in reports)
+WEBDRIVER_BASEURL = "http://superset:8088/"  # For docker-compose, use http://superset_app:8088/
 WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
 
+# Allow CTAS (CREATE TABLE AS SELECT) without row limit in SQL Lab
 SQLLAB_CTAS_NO_LIMIT = True
 
-#
-# Optionally import superset_config_docker.py (which will have been included on
-# the PYTHONPATH) in order to allow for local settings to be overridden
-#
+# Optionally import Docker-specific overrides if present
 try:
     import superset_config_docker
     from superset_config_docker import *  # noqa

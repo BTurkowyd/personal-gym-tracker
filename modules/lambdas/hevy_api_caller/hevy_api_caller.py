@@ -4,8 +4,10 @@ import boto3
 from datetime import datetime
 import json
 
+# Discord webhook URL for sending notifications
 DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK')
 
+# Headers for authenticating with the Hevy API
 HEVY_HEADER = {
     'accept': 'application/json, text/plain, */*',
     'x-api-key': 'klean_kanteen_insulated',
@@ -18,11 +20,21 @@ HEVY_HEADER = {
 
 
 def lambda_handler(event, context):
+    """
+    AWS Lambda entry point.
+    Receives SNS event, extracts the message, and dispatches to the command handler.
+    """
     received_message = event['Records'][0]['Sns']['Message']
     command_handler(received_message)
 
 
 def send_message(message: str, webhook_url: str) -> None:
+    """
+    Sends a message to the specified Discord webhook.
+    Args:
+        message (str): The message content.
+        webhook_url (str): The Discord webhook URL.
+    """
     message_dict = {"content": message}
     try:
         response = requests.post(webhook_url, json=message_dict)
@@ -31,6 +43,12 @@ def send_message(message: str, webhook_url: str) -> None:
 
 
 def command_handler(message: str):
+    """
+    Handles commands received via SNS.
+    Dispatches to the appropriate function based on the command.
+    Args:
+        message (str): The JSON-encoded command message.
+    """
     message = json.loads(message)
 
     command = message['command']
@@ -52,6 +70,11 @@ def command_handler(message: str):
 
 
 def fetch_recent_workouts() -> None:
+    """
+    Fetches recent workouts from the Hevy API, uploads them to S3,
+    registers them in DynamoDB, and updates the latest workout index in SSM.
+    Sends notifications to Discord on completion or error.
+    """
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(
         Name='/926728314305/latest-workout-index'
@@ -94,7 +117,6 @@ def fetch_recent_workouts() -> None:
                     'bucket_name': {'S': bucket_name},
                     'key': {'S': file_path},
                     'workout_day': {'S': datetime.fromtimestamp(w['start_time']).strftime('%Y-%m-%d')}
-
                 }
 
                 register_file_in_dynamodb(table_name, item)
@@ -114,6 +136,9 @@ def fetch_recent_workouts() -> None:
 
 
 def print_latest_workout() -> None:
+    """
+    Retrieves and sends the latest workout to Discord.
+    """
     try:
         latest_workout_index = get_parameter('/926728314305/latest-workout-index')
         item = query_dynamodb('index', latest_workout_index)
@@ -134,6 +159,11 @@ def print_latest_workout() -> None:
 
 
 def print_workout(date: str) -> None:
+    """
+    Retrieves and sends a workout for a specific date to Discord.
+    Args:
+        date (str): The workout date in 'YYYY-MM-DD' format.
+    """
     try:
         item = query_dynamodb('workout_day', date, 'WorkoutsTableWorkoutsDayGSI-vebHVZG9-DRTXQehc6pqJg')
         workout_json = get_s3_object(item['bucket_name']['S'], item['key']['S'])
@@ -151,10 +181,14 @@ def print_workout(date: str) -> None:
 
 
 def upload_file_to_s3(file_path, bucket_name, body):
-    # Create an S3 client
+    """
+    Uploads a file to the specified S3 bucket.
+    Args:
+        file_path (str): The S3 key (path) for the file.
+        bucket_name (str): The S3 bucket name.
+        body (bytes): The file content as bytes.
+    """
     s3 = boto3.client('s3')
-
-    # Upload the file to S3
     s3.put_object(
         Bucket=bucket_name,
         Key=file_path,
@@ -163,6 +197,12 @@ def upload_file_to_s3(file_path, bucket_name, body):
 
 
 def register_file_in_dynamodb(table_name: str, item: dict) -> None:
+    """
+    Registers a workout file in DynamoDB.
+    Args:
+        table_name (str): The DynamoDB table name.
+        item (dict): The item to put in the table.
+    """
     dynamodb = boto3.client('dynamodb')
     dynamodb.put_item(
         TableName=table_name,
@@ -171,6 +211,11 @@ def register_file_in_dynamodb(table_name: str, item: dict) -> None:
 
 
 def update_latest_workout_parameter_store(latest_workout_index: int) -> None:
+    """
+    Updates the latest workout index in AWS SSM Parameter Store.
+    Args:
+        latest_workout_index (int): The latest workout index to store.
+    """
     ssm = boto3.client('ssm')
 
     ssm.put_parameter(
@@ -182,12 +227,28 @@ def update_latest_workout_parameter_store(latest_workout_index: int) -> None:
 
 
 def get_parameter(name: str) -> str:
+    """
+    Retrieves a parameter value from AWS SSM Parameter Store.
+    Args:
+        name (str): The parameter name.
+    Returns:
+        str: The parameter value.
+    """
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(Name=name)
     return str(response['Parameter']['Value'])
 
 
 def query_dynamodb(column_name: str, value: str, index_name: str = None) -> dict:
+    """
+    Queries DynamoDB for an item by column and value.
+    Args:
+        column_name (str): The column to query.
+        value (str): The value to match.
+        index_name (str, optional): The index to use for the query.
+    Returns:
+        dict: The first matching item.
+    """
     key_condition_expression = f'#{column_name} = :v1'
     expression_attribute_names = {
         f'#{column_name}': column_name,
@@ -199,8 +260,8 @@ def query_dynamodb(column_name: str, value: str, index_name: str = None) -> dict
         },
     }
 
+    dynamodb = boto3.client('dynamodb')
     if index_name:
-        dynamodb = boto3.client('dynamodb')
         response = dynamodb.query(
             TableName=os.environ.get('DYNAMODB_TABLE_NAME'),
             IndexName=index_name,
@@ -211,7 +272,6 @@ def query_dynamodb(column_name: str, value: str, index_name: str = None) -> dict
             ExpressionAttributeValues=expression_attribute_values
         )
     else:
-        dynamodb = boto3.client('dynamodb')
         response = dynamodb.query(
             TableName=os.environ.get('DYNAMODB_TABLE_NAME'),
             Select='SPECIFIC_ATTRIBUTES',
@@ -225,6 +285,14 @@ def query_dynamodb(column_name: str, value: str, index_name: str = None) -> dict
 
 
 def get_s3_object(bucket_name: str, key: str) -> dict:
+    """
+    Retrieves and parses a JSON object from S3.
+    Args:
+        bucket_name (str): The S3 bucket name.
+        key (str): The S3 object key.
+    Returns:
+        dict: The parsed JSON object.
+    """
     s3 = boto3.client('s3')
     response = s3.get_object(Bucket=bucket_name, Key=key)
     body = response['Body'].read().decode('utf-8')
@@ -232,6 +300,13 @@ def get_s3_object(bucket_name: str, key: str) -> dict:
 
 
 def format_workout_message(workout_json: dict) -> str:
+    """
+    Formats a workout JSON object into a human-readable message.
+    Args:
+        workout_json (dict): The workout data.
+    Returns:
+        str: The formatted message.
+    """
     message = ''
     for e in workout_json['exercises']:
         message += f'{e["title"]}\n'

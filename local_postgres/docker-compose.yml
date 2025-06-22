@@ -7,13 +7,13 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_USER: "${POSTGRES_USER}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"         # Database user from .env
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}" # Database password from .env
+      POSTGRES_DB: "${POSTGRES_DB}"             # Database name from .env
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data  # Persist database data
     ports:
-      - "5432:5432"
+      - "5432:5432"                             # Expose Postgres on host
     networks:
       - superset-network
 
@@ -22,9 +22,9 @@ services:
     container_name: superset_cache
     restart: unless-stopped
     ports:
-      - "127.0.0.1:6379:6379"
+      - "127.0.0.1:6379:6379"                   # Expose Redis on localhost only
     volumes:
-      - redis:/data
+      - redis:/data                            # Persist Redis data
     networks:
       - superset-network
 
@@ -36,18 +36,18 @@ services:
     environment:
       SUPERSET_ENV: production
       SUPERSET_LOAD_EXAMPLES: "no"
-      SUPERSET_SECRET_KEY: "${SUPERSET_SECRET_KEY}"
-      SQLALCHEMY_DATABASE_URI: "${SQLALCHEMY_DATABASE_URI}"
-      SUPERSET_CONFIG_PATH: "/app/superset_config.py"
-      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      SUPERSET_SECRET_KEY: "${SUPERSET_SECRET_KEY}"           # Secret key for Superset
+      SQLALCHEMY_DATABASE_URI: "${SQLALCHEMY_DATABASE_URI}"   # DB connection string
+      SUPERSET_CONFIG_PATH: "/app/superset_config.py"         # Custom config path
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"               # AWS credentials (optional)
       AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION}"
     volumes:
-      - superset_home:/app/superset_home
-      - ./superset/superset_config.py:/app/superset_config.py
-      - ./.env:/app/.env
+      - superset_home:/app/superset_home                      # Persist Superset home
+      - ./superset/superset_config.py:/app/superset_config.py # Mount custom config
+      - ./.env:/app/.env                                      # Mount environment file
     ports:
-      - "8088:8088"
+      - "8088:8088"                                           # Expose Superset UI
     depends_on:
       - postgres
     command: >
@@ -62,10 +62,10 @@ services:
       - superset-network
 
 volumes:
-  postgres_data:
-  superset_home:
-  redis:
+  postgres_data:   # Volume for Postgres data
+  superset_home:   # Volume for Superset home directory
+  redis:           # Volume for Redis data
 
 networks:
   superset-network:
-    driver: bridge
+    driver: bridge # Isolated network for all services
