@@ -30,7 +30,7 @@ This repository contains the complete infrastructure-as-code and supporting scri
 
 ## Architecture Overview
 
-![Silka Architecture Diagram](./docs/architecture.png)
+![Silka Architecture Diagram](./side-scripts/infrastructure-diagram/infrastructure.png)
 
 The infrastructure is designed to ingest workout data from the Hevy API, store it in AWS (S3, DynamoDB), and make it queryable via Athena and Glue. A Discord bot provides an interface for users to interact with the system. Superset is used for analytics and visualization.
 
