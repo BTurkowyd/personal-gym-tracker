@@ -6,3 +6,10 @@
 /side-scripts/otp/QRCode.png
 /local_postgres/.env
 /local_postgres/superset/.env
+.terragrunt-cache/
+.terraform/
+.idea/
+
+.env
+.DS_store
+*.pyc

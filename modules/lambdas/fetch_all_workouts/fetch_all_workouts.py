@@ -6,10 +6,14 @@ import os
 
 
 def upload_file_to_s3(file_path, bucket_name, body):
-    # Create an S3 client
+    """
+    Uploads a file to the specified S3 bucket.
+    Args:
+        file_path (str): The S3 key (path) for the file.
+        bucket_name (str): The S3 bucket name.
+        body (bytes): The file content as bytes.
+    """
     s3 = boto3.client('s3')
-
-    # Upload the file to S3
     s3.put_object(
         Bucket=bucket_name,
         Key=file_path,
@@ -18,6 +22,12 @@ def upload_file_to_s3(file_path, bucket_name, body):
 
 
 def register_file_in_dynamodb(table_name: str, item: dict) -> None:
+    """
+    Registers a workout file in DynamoDB.
+    Args:
+        table_name (str): The DynamoDB table name.
+        item (dict): The item to put in the table.
+    """
     dynamodb = boto3.client('dynamodb')
     dynamodb.put_item(
         TableName=table_name,
@@ -26,6 +36,11 @@ def register_file_in_dynamodb(table_name: str, item: dict) -> None:
 
 
 def update_latest_workout_parameter_store(table_name: str) -> None:
+    """
+    Scans DynamoDB for the highest workout index and updates SSM Parameter Store.
+    Args:
+        table_name (str): The DynamoDB table name.
+    """
     dynamodb = boto3.client('dynamodb')
 
     scan_params = {
@@ -54,6 +69,11 @@ def update_latest_workout_parameter_store(table_name: str) -> None:
 
 
 def lambda_fetch_workouts(event, context):
+    """
+    AWS Lambda entry point for fetching all workouts from Hevy API.
+    Downloads all workouts, uploads them to S3, registers them in DynamoDB,
+    and updates the latest workout index in SSM.
+    """
     all_workouts = []
 
     headers = {
@@ -66,9 +86,11 @@ def lambda_fetch_workouts(event, context):
         'Cache-Control': 'no-cache',
     }
 
+    # Get total workout count (not used, but could be for progress)
     response = requests.get('https://api.hevyapp.com/workout_count', headers=headers)
     workout_count = response.json()['workout_count']
 
+    # Fetch first batch of workouts
     response = requests.get('https://api.hevyapp.com/workouts_batch/0', headers=headers)
     workouts = response.json()
     all_workouts += workouts
@@ -76,11 +98,13 @@ def lambda_fetch_workouts(event, context):
     bucket_name = os.environ.get('BUCKET_NAME')
     table_name = os.environ.get('DYNAMODB_TABLE_NAME')
 
+    # Continue fetching batches of 10 until all are retrieved
     while len(workouts) == 10:
         response = requests.get('https://api.hevyapp.com/workouts_batch/' + str(workouts[-1]['index']+1), headers=headers)
         workouts = response.json()
         all_workouts += workouts
 
+    # Store each workout in S3 and DynamoDB
     for w in all_workouts:
         workout_id = w['id']
         timestamp = str(datetime.fromtimestamp(w['start_time']))
@@ -100,11 +124,11 @@ def lambda_fetch_workouts(event, context):
             'bucket_name': {'S': bucket_name},
             'key': {'S': file_path},
             'workout_day': {'S': datetime.fromtimestamp(w['start_time']).strftime('%Y-%m-%d')}
-
         }
 
         register_file_in_dynamodb(table_name, item)
 
+    # Update the latest workout index in SSM
     update_latest_workout_parameter_store(table_name)
 
 

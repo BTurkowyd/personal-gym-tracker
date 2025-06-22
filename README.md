@@ -1,52 +1,205 @@
-# A simple discord bot using AWS resources (almost free).
+# Silka AWS Infrastructure
 
-![infrastructure_diagram](./side-scripts/infrastructure-diagram/infrastructure.png)
+This repository contains the complete infrastructure-as-code and supporting scripts for the **Silka Workouts** platform, including:
+- Discord bot integration
+- Data ingestion from the Hevy API
+- Data lake and analytics stack (Athena, Glue, S3, Superset)
+- Automated deployment using Terraform, Terragrunt, Docker, and Packer
 
-## Prerequisites:
-1. Own Discord server where you can set up and test your bot application. https://discordpy.readthedocs.io/en/stable/discord.html. There you will get a few authorization values such as `APPLICATION ID`, `PUBLIC KEY` in the `General information` section and `TOKEN` in the `Bot` section which have to be stored in `.env` files mention in point 5.
-2. AWS account with an IAM user account which has access keys generated (programmatic access): https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html?icmpid=docs_iam_console#Using_CreateAccessKey. This is required for `terraform`.
-3. Installed `terraform`: https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli#install-terraform
-4. Python 3.11 with `pipenv` installed. https://pypi.org/project/pipenv/. While `pipenv` is not mandatory and libraries listed in `Pipfile` can be installed manually with `pip`, `pipenv` makes it much easier and organized.
-5. Two `.env` files, one within `./modules` folder which defines environmental variables for lambda functions, another in `./side-scripts/discord_bot` storing environmental variables for `bot_commands.py`. There will be also third `.env` file generated in section [Setting a one-time-password-generator](#setting-a-one-time-password-generator). 
+---
 
-## Setting up the infrastructure in AWS
-1. Open the terminal.
-2. Be sure that the IAM user with the programmatic access is active:
-   - You can check it by executing the following command: `aws configure list`. The output should show the user profile name, access key and secret key (both keys are hidden).
-   - If that is not the case, execute the following command: `export AWS_PROFILE='profile-name'`
-3. In `Makefile` in the root repository folder, you can find a few commands which are simplifying the process of setting up the infrastructure.
+## Table of Contents
 
-## Setting an interaction endpoint URL in Discord Application.
-1. In the AWS console go to `API Gateway`, select the API you created.
-2. On the left panel go to `Stages`, 
-3. In the main window click the `+` symbol next to the stage name to unwrap it, then do it the same until you will see the `POST` method.
-4. There you will see the `Invoke URL`, which you have to copy and paste it in the point 7.
-5. Go to https://discord.com/developers/applications
-6. Select `Applications` on the left panel and then click on your application/bot.
-7. Go to `General information` section and in the `INTERACTIONS ENDPOINT URL` field paste the `Invoke URL` from the point 4. and save changes.
-8. If everything goes smoothly, discord will send a `PING` request to the lambda to confirm that endpoint works and returns the proper value.
+- [Silka AWS Infrastructure](#silka-aws-infrastructure)
+  - [Table of Contents](#table-of-contents)
+  - [Architecture Overview](#architecture-overview)
+  - [Repository Structure](#repository-structure)
+  - [Prerequisites](#prerequisites)
+  - [Environment Setup](#environment-setup)
+  - [Deployment](#deployment)
+    - [1. Build and Push Lambda Docker Images](#1-build-and-push-lambda-docker-images)
+    - [2. Terragrunt Environments](#2-terragrunt-environments)
+  - [Local Development (Superset)](#local-development-superset)
+  - [Modules Overview](#modules-overview)
+  - [Security Notes](#security-notes)
+  - [Troubleshooting](#troubleshooting)
+  - [License](#license)
+  - [Contact](#contact)
 
-## Adding commands to the bot.
-1. Locally execute the `side-scripts/discord_bot/bot_commands.py` code.
+---
 
-## Setting a one-time-password generator
-1. Locally execute the `side-scripts/otp/otp.py` code.
-2. It will generate two files:
-   - `.env`- with `OTP_RANDOM_KEY` which will be used by OTP generator. Copy this file content also to `modules/.env` as Discord bot Lambda function will use it to verify OTPs.
-   - `QRCode.png`- a QR code, which can be scanned with authenticator apps like Google Authenticator, for easy access to OTP generator.
-3. The `OTP_RANDOM_KEY` should not be changed. If it is necessary, you have to restart the whole procedure (points 1 & 2).
+## Architecture Overview
 
-## A few words from the repository owner.
-In the [I was inspired by section](#i-was-inspired-by) I linked a several resources which were guiding me through this process, but I never used any of this tutorial in 100%, even if they are correct. Here is why:
-1. Not unexpectedly, all these tutorials are shown only in AWS console and are not using any infrastructure as code (IaC) approach. I simply wanted to have a nice and clean system design. 
-2. In my opinion these tutorials which are recommending using API Gateway are missing one, very important piece of information, which caused me to spend one evening to solve the problem. 
-   - In these tutorials they suggest that setting up an API Gateway (either HTTP or REST) with default settings will do the job. It is only 50% correct. This is correct as long as you create that resource via AWS console browser.
-   - While sending a request which was triggering the AWS Lambda bot and it was executing the code as expected, it was not returning the response to the Discord application despite having the return value set properly.
-   - The missing piece of puzzle was method response setting in the REST API (see [here](https://github.com/BTurkowyd/silka/blob/main/modules/api_gateway.tf#L18)). After setting it to `application/json` response model, the API Gateway was able to return the response further to the Discord application.
-   - So to summarize: it has to be the REST API and it needs a response model to be set up to `application/json`.
+![Silka Architecture Diagram](./docs/architecture.png)
 
-## I was inspired by.
-- https://youtu.be/BmtMr6Nmz9k?si=aHoztPlpJMtuAi56
-- https://youtu.be/1yLfjMtsV9s?si=P8Q6y90wZ8ajmhkz
-- https://github.com/ker0olos/aws-lambda-discord-bot?tab=readme-ov-file
-- https://betterprogramming.pub/build-a-discord-bot-with-aws-lambda-api-gateway-cc1cff750292
+The infrastructure is designed to ingest workout data from the Hevy API, store it in AWS (S3, DynamoDB), and make it queryable via Athena and Glue. A Discord bot provides an interface for users to interact with the system. Superset is used for analytics and visualization.
+
+**Main AWS Components:**
+- **API Gateway**: Exposes endpoints for the Discord bot.
+- **Lambda Functions**: 
+  - `discord_bot`: Handles Discord interactions.
+  - `hevy_api_caller`: Fetches and processes workout data.
+  - `fetch_all_workouts`: Bulk fetches all workouts from Hevy.
+- **SNS**: Used for decoupling bot commands and data processing.
+- **S3**: Stores raw and processed workout data.
+- **DynamoDB**: Metadata and indexing for workouts.
+- **Athena & Glue**: Query and catalog workout data.
+- **Superset**: Analytics UI, deployed on EC2 or locally via Docker.
+
+---
+
+## Repository Structure
+
+```
+.
+├── environments/           # Terragrunt environment configs (dev, prod)
+├── modules/                # Terraform modules (lambdas, api_gateway, ecr, dynamodb, etc.)
+│   ├── lambdas/            # Lambda Docker build, variables, and deployment
+│   ├── superset-user/      # IAM user for Superset
+│   ├── superset_instance/  # EC2 and Docker Compose for Superset
+│   └── ...                 # Other infra modules
+├── local_postgres/         # Local Docker Compose for Superset development
+├── side-scripts/           # Utility scripts (bot commands, diagrams, etc.)
+├── Makefile                # Build and deployment automation
+└── README.md               # (You are here)
+```
+
+---
+
+## Prerequisites
+
+- **AWS Account** with sufficient permissions (IAM, Lambda, S3, DynamoDB, ECR, EC2, etc.)
+- **AWS CLI** configured (`aws configure`)
+- **Terraform** >= 1.6.1
+- **Terragrunt** (for environment management)
+- **Docker** and **Docker Compose**
+- **Packer** (for building Lambda Docker images)
+- **Python 3.11** (for local scripts and Superset)
+- **pipenv** or `pip` for Python dependencies
+
+---
+
+## Environment Setup
+
+1. **Clone the repository:**
+    ```sh
+    git clone https://github.com/your-org/silka.git
+    cd silka
+    ```
+
+2. **Configure AWS credentials:**
+    ```sh
+    aws configure
+    ```
+
+3. **Install dependencies:**
+    - **Terraform:** https://learn.hashicorp.com/tutorials/terraform/install-cli
+    - **Terragrunt:** https://terragrunt.gruntwork.io/docs/getting-started/install/
+    - **Docker & Docker Compose:** https://docs.docker.com/get-docker/
+    - **Packer:** https://developer.hashicorp.com/packer/install
+    - **Python:** https://www.python.org/downloads/
+    - **pipenv:** `pip install pipenv`
+
+4. **Set up environment variables:**
+    - Copy `.env.example` to `.env` in relevant directories and fill in secrets (AWS keys, Discord tokens, etc.).
+    - Example for `modules/.env`:
+      ```
+      DISCORD_APP_PUBLIC_KEY=...
+      HEVY_TOKEN=...
+      OTP_RANDOM_KEY=...
+      DISCORD_WEBHOOK=...
+      AWS_ACCESS_KEY_ID=...
+      AWS_SECRET_ACCESS_KEY=...
+      AWS_DEFAULT_REGION=eu-central-1
+      ```
+
+---
+
+## Deployment
+
+### 1. Build and Push Lambda Docker Images
+
+All Lambda functions are packaged as Docker images and pushed to AWS ECR using Packer.
+
+- **Build and deploy all Lambda images and infrastructure:**
+    ```sh
+    make push-all
+    ```
+    This will:
+    - Build all Lambda Docker images (`fetch_all_workouts`, `discord_bot`, `hevy_api_caller`)
+    - Push them to ECR
+    - Apply Terraform via Terragrunt for the selected stage (`dev` by default)
+
+- **Deploy a single Lambda image:**
+    ```sh
+    make push-fetch-all-workouts
+    make push-discord-bot
+    make push-hevy-api-caller
+    ```
+
+- **Apply infrastructure only (no Docker builds):**
+    ```sh
+    make apply
+    ```
+
+### 2. Terragrunt Environments
+
+- **dev** and **prod** environments are managed in `environments/dev` and `environments/prod`.
+- Each environment has its own `terragrunt.hcl` that points to the root modules and sets environment-specific variables.
+
+---
+
+## Local Development (Superset)
+
+You can run Superset locally for development and analytics:
+
+```sh
+cd local_postgres
+docker-compose up
+```
+
+- Access Superset at [http://localhost:8088](http://localhost:8088)
+- Default credentials and DB connection are set via `.env` files.
+
+---
+
+## Modules Overview
+
+- **lambdas/**: Lambda function deployment, ECR image lookup, SNS integration, and environment variables.
+- **api_gateway.tf**: API Gateway setup for Discord bot endpoint.
+- **dynamodb.tf**: DynamoDB table for workout metadata, with GSI for querying by workout day.
+- **ecr.tf**: ECR repositories and lifecycle policies for Lambda images.
+- **iam.tf**: IAM roles and policies for Lambda and Superset access.
+- **athena/**: Athena database, Glue catalog, and S3 bucket for query results.
+- **superset-user/**: IAM user and credentials for Superset to access Athena and S3.
+- **superset_instance/**: EC2 and Docker Compose setup for running Superset in the cloud.
+
+---
+
+## Security Notes
+
+- **Sensitive values** (tokens, secrets, keys) are loaded from `.env` files and not stored in the repository.
+- **IAM policies** are scoped to only necessary resources (Athena, S3, Glue, DynamoDB).
+- **SNS topic policy** is open for demonstration; restrict in production.
+- **Superset IAM user credentials** are output as sensitive values.
+
+---
+
+## Troubleshooting
+
+- **Docker image build errors:** Ensure Docker and Packer are installed and running.
+- **Terraform/AWS errors:** Check AWS credentials and permissions.
+- **Superset connection issues:** Verify `.env` values and that all containers are running.
+- **Discord bot not responding:** Check Lambda logs in AWS Console and ensure API Gateway is deployed.
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Contact
+
+For questions or contributions, please open an issue or contact the repository maintainer.

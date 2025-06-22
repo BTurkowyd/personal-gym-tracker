@@ -1,33 +1,40 @@
+# ECR repository for Discord bot Lambda Docker image.
 resource "aws_ecr_repository" "discord_bot_ecr" {
   name = "discord-bot-lambda"
   force_delete = true
 }
 
+# ECR repository for Hevy API caller Lambda Docker image.
 resource "aws_ecr_repository" "hevy_api_caller" {
   name = "hevy-api-caller"
   force_delete = true
 }
 
+# ECR repository for fetch all workouts Lambda Docker image.
 resource "aws_ecr_repository" "fetch_all_workouts" {
   name = "fetch-all-workouts"
   force_delete = true
 }
 
+# Lifecycle policy for Discord bot ECR repository.
 resource "aws_ecr_lifecycle_policy" "discord_bot" {
   policy     = jsonencode(local.lifecycle_policy)
   repository = aws_ecr_repository.discord_bot_ecr.name
 }
 
+# Lifecycle policy for Hevy API caller ECR repository.
 resource "aws_ecr_lifecycle_policy" "hevy_api_caller" {
   policy     = jsonencode(local.lifecycle_policy)
   repository = aws_ecr_repository.hevy_api_caller.name
 }
 
+# Lifecycle policy for fetch all workouts ECR repository.
 resource "aws_ecr_lifecycle_policy" "fetch_all_workouts" {
   policy     = jsonencode(local.lifecycle_policy)
   repository = aws_ecr_repository.fetch_all_workouts.name
 }
 
+# Local variable defining ECR lifecycle policy to delete untagged images older than 1 day.
 locals {
   lifecycle_policy = {
     rules = [
