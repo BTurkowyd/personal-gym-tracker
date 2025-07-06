@@ -9,6 +9,8 @@ module "lambdas" {
   discord_bot_ecr_repo_name = aws_ecr_repository.discord_bot_ecr.name
   hevy_api_caller_repo_name = aws_ecr_repository.hevy_api_caller.name
   fetch_all_workouts_repo_name = aws_ecr_repository.fetch_all_workouts.name
+  athena_database_name = module.athena.athena_database_name
+  athena_queries_bucket = module.athena.athena_queries_bucket
 }
 
 # Athena module for query and data lake integration.

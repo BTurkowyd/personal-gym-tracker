@@ -41,3 +41,13 @@ variable "hevy_api_caller_repo_name" {
 variable "fetch_all_workouts_repo_name" {
   description = "The name of the ECR repository"
 }
+
+variable "athena_database_name" {
+  description = "The name of the Athena database for workouts"
+  type        = string
+}
+
+variable "athena_queries_bucket" {
+  description = "The S3 bucket location for Athena query results"
+  type        = string
+}

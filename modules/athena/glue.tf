@@ -114,7 +114,7 @@ resource "aws_glue_catalog_table" "workouts_table" {
     }
     columns {
       name = "exercises"
-      type = "array<struct<id:string,title:string,es_title:string,de_title:string,fr_title:string,it_title:string,pt_title:string,ko_title:string,ja_title:string,tr_title:string,ru_title:string,zh_cn_title:string,zh_tw_title:string,superset_id:string,rest_seconds:int,notes:string,exercise_template_id:string,url:string,exercise_type:string,equipment_category:string,media_type:string,custom_exercise_image_url:string,custom_exercise_image_thumbnail_url:string,thumbnail_url:string,muscle_group:string,other_muscles:array<string>,priority:int,sets:array<struct<id:string,index:int,indicator:string,weight_kg:double,reps:int,distance_meters:int,duration_seconds:int,rpe:double,prs:array<struct<type:string,value:double>>,personalRecords:array<struct<type:string,value:double>>>>>"
+      type = "array<struct<id:string,url:string,sets:array<struct<id:string,prs:array<string>,rpe:double,reps:int,index:int,indicator:string,weight_kg:double,distance_meters:double,personalRecords:array<string>,duration_seconds:int>>,notes:string,title:string,de_title:string,es_title:string,fr_title:string,it_title:string,ja_title:string,ko_title:string,priority:int,pt_title:string,ru_title:string,tr_title:string,media_type:string,superset_id:string,zh_cn_title:string,zh_tw_title:string,muscle_group:string,rest_seconds:int,exercise_type:string,other_muscles:array<string>,thumbnail_url:string,equipment_category:string,exercise_template_id:string,volume_doubling_enabled:boolean,custom_exercise_image_url:string,custom_exercise_image_thumbnail_url:string>>"
     }
   }
 }

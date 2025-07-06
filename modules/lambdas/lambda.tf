@@ -70,6 +70,29 @@ resource "aws_lambda_function" "get_table_schema" {
   source_code_hash = data.archive_file.get_table_schema.output_base64sha256
 }
 
+data "archive_file" "execute_query" {
+  type        = "zip"
+  source_file = "${path.module}/execute_query/execute_query.py"
+  output_path = "${path.module}/execute_query/execute_query.zip"
+}
+
+# Lambda function for executing Athena queries.
+resource "aws_lambda_function" "execute_query" {
+  function_name = "ExecuteAthenaQuery"
+  role          = var.lambda_role_arn
+  handler       = "execute_query.lambda_handler"
+  runtime       = "python3.11"
+  timeout       = 60
+  filename      = data.archive_file.execute_query.output_path
+  source_code_hash = data.archive_file.execute_query.output_base64sha256
+  environment {
+    variables = {
+      ATHENA_DATABASE = var.athena_database_name
+      ATHENA_OUTPUT   = "s3://${var.athena_queries_bucket}/"
+    }
+  }
+}
+
 # Allow SNS to invoke the Hevy API caller Lambda function.
 resource "aws_lambda_permission" "invoke_lambda_by_sns" {
   statement_id  = "AllowExecutionFromSNS"

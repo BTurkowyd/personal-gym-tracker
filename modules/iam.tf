@@ -26,7 +26,8 @@ resource "aws_iam_role_policy" "s3_access" {
       Effect   = "Allow"
       Action   = [
         "s3:PutObject",
-        "s3:GetObject"
+        "s3:GetObject",
+        "s3:ListBucket",
       ]
       Resource = [
         aws_s3_bucket.upload_bucket.arn,
@@ -62,18 +63,26 @@ resource "aws_iam_role_policy" "dynamodb_access" {
 # Policy for Lambda to access SSM Parameter Store for workout index.
 resource "aws_iam_role_policy" "ssm_parameter_access" {
   name = "DiscordBotSSMAccess"
+  role = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = [
-        "ssm:GetParameter",
-        "ssm:PutParameter",
-      ]
-      Resource = "*"
-    }]
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath",
+          "ssm:PutParameter"
+        ]
+        Resource = [
+          "arn:aws:ssm:eu-central-1:${data.aws_caller_identity.current.account_id}:parameter/discord/*",
+          "arn:aws:ssm:eu-central-1:${data.aws_caller_identity.current.account_id}:parameter/hevy/*",
+          "arn:aws:ssm:eu-central-1:${data.aws_caller_identity.current.account_id}:parameter/silka/*"
+        ]
+      }
+    ]
   })
-  role   = aws_iam_role.lambda_role.id
 }
 
 # Attach AWS managed policy for Lambda VPC access.
@@ -92,12 +101,65 @@ resource "aws_iam_role_policy" "glue_get_table_access" {
       {
         Effect = "Allow"
         Action = [
-          "glue:GetTable"
+          "glue:GetTable",
+          "glue:GetTables",
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:GetTableVersion",
+          "glue:GetTableVersions"
         ]
         Resource = [
           "arn:aws:glue:eu-central-1:${data.aws_caller_identity.current.account_id}:catalog",
           "arn:aws:glue:eu-central-1:${data.aws_caller_identity.current.account_id}:database/*",
           "arn:aws:glue:eu-central-1:${data.aws_caller_identity.current.account_id}:table/*/*"
+        ]
+      }
+    ]
+  })
+}
+
+# Policy for Lambda to execute Athena queries and get results
+resource "aws_iam_role_policy" "athena_access" {
+  name = "DiscordBotAthenaAccess"
+  role = aws_iam_role.lambda_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "athena:StartQueryExecution",
+          "athena:GetQueryExecution",
+          "athena:GetQueryResults",
+          "athena:StopQueryExecution",
+          "athena:GetWorkGroup",
+          "athena:GetDatabase",
+          "athena:GetTableMetadata",
+          "athena:ListWorkGroups",
+          "athena:ListDatabases",
+          "athena:ListTableMetadata",
+          "athena:GetDataCatalog",
+          "athena:ListDataCatalogs"
+        ],
+        Resource = [
+          "arn:aws:athena:eu-central-1:${data.aws_caller_identity.current.account_id}:workgroup/*",
+          "arn:aws:athena:eu-central-1:${data.aws_caller_identity.current.account_id}:datacatalog/*",
+          "arn:aws:athena:eu-central-1:${data.aws_caller_identity.current.account_id}:database/*",
+          "arn:aws:athena:eu-central-1:${data.aws_caller_identity.current.account_id}:table/*/*"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:AbortMultipartUpload",
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ],
+        Resource = [
+          module.athena.athena_bucket_arn,
+          "${module.athena.athena_bucket_arn}/*"
         ]
       }
     ]
