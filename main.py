@@ -63,13 +63,15 @@ def execute_athena_query(input: str) -> str:
         return f"ERROR: Failed to parse Lambda response. Raw body:\n{raw_body}"
 
     body = parsed.get("body")
+    if body is None:
+        return f"ERROR: Athena query failed or returned no response.\nQuery:\n{input}\nRaw Lambda response:\n{raw_body}"
     if isinstance(body, str):
         try:
             body = json.loads(body)
         except json.JSONDecodeError:
             return f"ERROR: Failed to parse 'body' as JSON: {body}"
 
-    if "rows" not in body:
+    if not isinstance(body, dict) or "rows" not in body:
         return f"ERROR: Athena query failed or returned no rows.\nQuery:\n{input}\nError:\n{body}"
 
     rows = body["rows"]
@@ -93,17 +95,19 @@ You have access to two tools:
 - `execute_athena_query`: runs a SQL query and returns up to 10 rows
 
 Your tasks:
-1. Always begin by calling `get_glue_table_schema` to get exact column names and data types.
-2. Use **Athena (Trino SQL)** dialect and match the schema precisely — **never guess** column names or data types.
-3. For any BIGINT UNIX timestamp column (e.g., `start_time`), **wrap it in `from_unixtime(...)`** when:
+1. Always begin by calling `get_glue_table_schema` to get exact column names, comments and data types.
+2. Use column names, data types, and comments from the schema to make informed decisions about your queries. THERE ARE NO HIDDEN COLUMNS OR TABLES. What you see in the schema is all that is available, so strictly adhere to it.
+3. Use **Athena (Trino SQL)** dialect and match the schema precisely — **never guess** column names or data types.
+4. For any BIGINT UNIX timestamp column (e.g., `start_time`), **wrap it in `from_unixtime(...)`** when:
    - extracting parts like year, month, day, hour, etc.
    - filtering by date ranges
 
-4. For date filtering:
+5. For date filtering:
    - Use `date(from_unixtime(column)) >= date('YYYY-MM-DD')`
    - NEVER compare BIGINT or TIMESTAMP columns directly to string literals like `'2022-01-01'`
 
-5. DO NOT use `unix_timestamp` or non-Trino-compatible functions. Use only the functions listed below.
+6. DO NOT use `unix_timestamp` or non-Trino-compatible functions. Use only the functions listed below.
+7. DO NOT use backticks in SQL queries.
 
 ---
 
@@ -122,26 +126,26 @@ Your tasks:
 
 ---
 
-6. Do **not** use column aliases in `GROUP BY` or `ORDER BY`; instead:
+7. Do **not** use column aliases in `GROUP BY` or `ORDER BY`; instead:
    - Repeat the full expression (e.g., `GROUP BY hour(from_unixtime(start_time))`)
    - Or use positional indexes (e.g., `ORDER BY 2 DESC`)
 
-7. Do use aliases in the `SELECT` clause to improve clarity.
+8. Do use aliases in the `SELECT` clause to improve clarity.
 
-8. On query failure:
+9. On query failure:
    - Carefully read the error message
    - Fix issues with column names, types, or functions
    - Retry the query once
 
-9. Keep answers clear and concise.
+10. Keep answers clear and concise.
    - Return results as clean plain-text tables or bullet lists
    - Use markdown formatting if supported
 
-10. Treat “muscle groups” and “body parts” as synonyms when interpreting questions.
+11. Treat “muscle groups” and “body parts” as synonyms when interpreting questions.
 
-11. If the user says “I”, “me”, or “my”, interpret it as referring to their own data in the database.
+12. If the user says “I”, “me”, or “my”, interpret it as referring to their own data in the database.
 
-12. Default to showing 10 rows unless more is explicitly requested.
+13. Default to showing 10 rows unless more is explicitly requested.
 
 ---
 
@@ -150,16 +154,16 @@ Your tasks:
 SELECT 
   hour(from_unixtime(start_time)) AS workout_hour,
   COUNT(*) AS workout_count
-FROM database_name.table_name
+FROM "database_name"."table_name"
 WHERE date(from_unixtime(start_time)) BETWEEN date('2022-01-01') AND date('2022-12-31')
 GROUP BY hour(from_unixtime(start_time))
-ORDER BY workout_count DESC
-LIMIT 10;
+ORDER BY workout_count DESC;
 """
     },
 )
 
 response = agent.invoke(
-    {"input": "at what hour was I mostly exercising in 2022?"}  # Example input
+    {
+        "input": "return me a list of exercises (including the day, sets, weights, reps) of three first ever workouts"
+    }
 )
-print(response["output"])

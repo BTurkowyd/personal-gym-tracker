@@ -161,7 +161,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "id"
       type = "string"
-      comment = "Unique identifier for the workout"
+      comment = "Unique identifier for the workout. It remains the same across different exercises and sets within the workout."
     }
     columns {
       name = "name"
@@ -176,7 +176,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "user_id"
       type = "string"
-      comment = "Unique identifier for the user"
+      comment = "Unique identifier for the user. There is only one user in this table."
     }
     columns {
       name = "end_time"
@@ -211,7 +211,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "nth_workout"
       type = "int"
-      comment = "The nth workout in the user's workout history"
+      comment = "The nth workout in the user's workout history. Can be used to track or sort workouts chronologically."
     }
     columns {
       name = "comment_count"
@@ -226,7 +226,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "exercise_id"
       type = "string"
-      comment = "Unique identifier for the exercise"
+      comment = "Unique identifier for the exercise. It remains the same across different sets within the exercise."
     }
     columns {
       name = "exercise_title"
