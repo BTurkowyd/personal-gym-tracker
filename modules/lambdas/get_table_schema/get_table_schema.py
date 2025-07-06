@@ -14,10 +14,12 @@ def lambda_handler(event, context):
     response = glue.get_table(DatabaseName=database_name, Name=table_name)
     columns = response["Table"]["StorageDescriptor"]["Columns"]
     column_names = [col["Name"] for col in columns]
+    data_type = [col["Type"] for col in columns]
     result = {
         "database_name": database_name,
         "table_name": table_name,
         "column_names": column_names,
+        "data_type": data_type,
     }
     return {"statusCode": 200, "body": result}
 
