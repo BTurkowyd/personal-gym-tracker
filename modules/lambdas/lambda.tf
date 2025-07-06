@@ -53,6 +53,22 @@ resource "aws_lambda_function" "hevy_api_caller" {
   }
 }
 
+data "archive_file" "get_table_schema" {
+  type        = "zip"
+  source_file = "${path.module}/get_table_schema/get_table_schema.py"
+  output_path = "${path.module}/get_table_schema/get_table_schema.zip"
+}
+
+# Lambda function for fetching Glue table schema (column names) from workouts_database.
+resource "aws_lambda_function" "get_table_schema" {
+  function_name = "GetGlueTableSchema"
+  role          = var.lambda_role_arn
+  handler       = "get_table_schema.lambda_handler"
+  runtime       = "python3.11"
+  timeout       = 15
+  filename      = data.archive_file.get_table_schema.output_path
+}
+
 # Allow SNS to invoke the Hevy API caller Lambda function.
 resource "aws_lambda_permission" "invoke_lambda_by_sns" {
   statement_id  = "AllowExecutionFromSNS"

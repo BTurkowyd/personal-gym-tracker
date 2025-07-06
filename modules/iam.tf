@@ -81,3 +81,25 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_access" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
   role       = aws_iam_role.lambda_role.id
 }
+
+# Policy for Lambda to access AWS Glue GetTable (needed for get_table_schema Lambda)
+resource "aws_iam_role_policy" "glue_get_table_access" {
+  name = "DiscordBotGlueGetTableAccess"
+  role = aws_iam_role.lambda_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "glue:GetTable"
+        ]
+        Resource = [
+          "arn:aws:glue:eu-central-1:${data.aws_caller_identity.current.account_id}:catalog",
+          "arn:aws:glue:eu-central-1:${data.aws_caller_identity.current.account_id}:database/*",
+          "arn:aws:glue:eu-central-1:${data.aws_caller_identity.current.account_id}:table/*/*"
+        ]
+      }
+    ]
+  })
+}

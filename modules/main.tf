@@ -26,7 +26,7 @@ module "superset_user" {
   data_bucket_arn = aws_s3_bucket.upload_bucket.arn
 }
 
-# Superset EC2 instance module for analytics UI.
-module "superset_instance" {
-  source  = "./superset_instance"
-}
+# # Superset EC2 instance module for analytics UI.
+# module "superset_instance" {
+#   source  = "./superset_instance"
+# }

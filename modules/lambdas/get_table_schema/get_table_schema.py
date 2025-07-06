@@ -1,0 +1,24 @@
+import os
+import boto3
+
+
+def lambda_handler(event, context):
+    # Fetch AWS account ID dynamically
+    sts = boto3.client("sts")
+    account_id = sts.get_caller_identity()["Account"]
+
+    database_name = f"{account_id}_workouts_database"
+    table_name = f"workouts_{account_id}"
+
+    glue = boto3.client("glue")
+    response = glue.get_table(DatabaseName=database_name, Name=table_name)
+    columns = response["Table"]["StorageDescriptor"]["Columns"]
+    column_names = [col["Name"] for col in columns]
+    return {"statusCode": 200, "body": column_names}
+
+
+if __name__ == "__main__":
+    event = {}
+    context = None
+    result = lambda_handler(event, context)
+    print(result)

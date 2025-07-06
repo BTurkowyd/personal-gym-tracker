@@ -1,7 +1,7 @@
 // Include the root terragrunt configuration from the nearest parent folder.
 // The 'expose = true' option makes the root configuration's outputs available to this module.
 include "root" {
-  path = find_in_parent_folders()
+  path = find_in_parent_folders("root.hcl")
   expose = true
 }
 
