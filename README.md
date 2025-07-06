@@ -75,7 +75,7 @@ The infrastructure is designed to ingest workout data from the Hevy API, store i
 - **Docker** and **Docker Compose**
 - **Packer** (for building Lambda Docker images)
 - **Python 3.11** (for local scripts and Superset)
-- **pipenv** or `pip` for Python dependencies
+- **uv** ([https://github.com/astral-sh/uv](https://github.com/astral-sh/uv)) for Python dependency management (compatible with Pipfile/Pipfile.lock)
 
 ---
 
@@ -98,7 +98,7 @@ The infrastructure is designed to ingest workout data from the Hevy API, store i
     - **Docker & Docker Compose:** https://docs.docker.com/get-docker/
     - **Packer:** https://developer.hashicorp.com/packer/install
     - **Python:** https://www.python.org/downloads/
-    - **pipenv:** `pip install pipenv`
+    - **uv:** Follow install instructions at https://github.com/astral-sh/uv (e.g. `curl -LsSf https://astral.sh/uv/install.sh | sh`)
 
 4. **Set up environment variables:**
     - Copy `.env.example` to `.env` in relevant directories and fill in secrets (AWS keys, Discord tokens, etc.).
@@ -112,6 +112,17 @@ The infrastructure is designed to ingest workout data from the Hevy API, store i
       AWS_SECRET_ACCESS_KEY=...
       AWS_DEFAULT_REGION=eu-central-1
       ```
+
+5. **Install Python dependencies with uv:**
+    - To install all dependencies from the lock file:
+      ```sh
+      uv sync
+      ```
+    - To add a new package:
+      ```sh
+      uv add <package>
+      ```
+    - For more, see [uv documentation](https://github.com/astral-sh/uv).
 
 ---
 
