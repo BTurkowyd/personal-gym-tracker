@@ -68,4 +68,5 @@ resource "aws_lambda_permission" "api_gw" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.discord_bot.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn
+  source_arn    = "${var.api_gateway_exec_arn}/*/*"
+}
