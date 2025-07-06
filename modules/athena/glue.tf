@@ -161,118 +161,147 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "id"
       type = "string"
+      comment = "Unique identifier for the workout"
     }
     columns {
       name = "name"
       type = "string"
+      comment = "Name of the workout"
     }
     columns {
       name = "index"
       type = "bigint"
+      comment = "Index of the workout"
     }
     columns {
       name = "user_id"
       type = "string"
+      comment = "Unique identifier for the user"
     }
     columns {
       name = "end_time"
       type = "bigint"
+      comment = "End time of the workout"
     }
     columns {
       name = "username"
       type = "string"
+      comment = "Username of the user"
     }
     columns {
       name = "created_at"
       type = "string"
+      comment = "Creation time of the workout"
     }
     columns {
       name = "routine_id"
       type = "string"
+      comment = "Unique identifier for the routine"
     }
     columns {
       name = "start_time"
       type = "bigint"
+      comment = "Start time of the workout"
     }
     columns {
       name = "updated_at"
       type = "string"
+      comment = "Last update time of the workout"
     }
     columns {
       name = "nth_workout"
       type = "int"
+      comment = "The nth workout in the user's workout history"
     }
     columns {
       name = "comment_count"
       type = "int"
+      comment = "Number of comments for the workout"
     }
     columns {
       name = "estimated_volume_kg"
       type = "double"
+      comment = "Estimated volume of the workout in kg"
     }
     columns {
       name = "exercise_id"
       type = "string"
+      comment = "Unique identifier for the exercise"
     }
     columns {
       name = "exercise_title"
       type = "string"
+      comment = "Title of the exercise"
     }
     columns {
       name = "exercise_priority"
       type = "int"
+      comment = "Priority of the exercise"
     }
     columns {
       name = "exercise_muscle_group"
       type = "string"
+      comment = "Muscle group targeted by the exercise"
     }
     columns {
       name = "exercise_rest_seconds"
       type = "int"
+      comment = "Rest time between sets for the exercise"
     }
     columns {
       name = "exercise_exercise_type"
       type = "string"
+      comment = "Type of the exercise"
     }
     columns {
       name = "exercise_equipment_category"
       type = "string"
+      comment = "Equipment category for the exercise"
     }
     columns {
       name = "exercise_exercise_template_id"
       type = "string"
+      comment = "Unique identifier for the exercise template"
     }
     columns {
       name = "set_id"
       type = "string"
+      comment = "Unique identifier for the set"
     }
     columns {
       name = "set_rpe"
       type = "double"
+      comment = "Rate of Perceived Exertion for the set"
     }
     columns {
       name = "set_reps"
       type = "int"
+      comment = "Number of repetitions for the set"
     }
     columns {
       name = "set_index"
       type = "int"
+      comment = "Index of the set"
     }
     columns {
       name = "set_indicator"
       type = "string"
+      comment = "Indicator for the set"
     }
     columns {
       name = "set_weight_kg"
       type = "double"
+      comment = "Weight lifted for the set in kg"
     }
     columns {
       name = "set_distance_meters"
       type = "double"
+      comment = "Distance covered for the set in meters"
     }
     columns {
       name = "set_duration_seconds"
       type = "int"
+      comment = "Duration of the set in seconds"
     }
   }
 }

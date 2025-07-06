@@ -8,7 +8,7 @@ def lambda_handler(event, context):
     account_id = sts.get_caller_identity()["Account"]
 
     database_name = f"{account_id}_workouts_database"
-    table_name = f"workouts_{account_id}"
+    table_name = f"workouts_{account_id}_parquet"
 
     glue = boto3.client("glue")
     response = glue.get_table(DatabaseName=database_name, Name=table_name)
