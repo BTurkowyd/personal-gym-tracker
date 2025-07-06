@@ -67,6 +67,7 @@ resource "aws_lambda_function" "get_table_schema" {
   runtime       = "python3.11"
   timeout       = 15
   filename      = data.archive_file.get_table_schema.output_path
+  source_code_hash = data.archive_file.get_table_schema.output_base64sha256
 }
 
 # Allow SNS to invoke the Hevy API caller Lambda function.
