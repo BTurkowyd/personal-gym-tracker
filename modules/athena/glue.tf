@@ -144,25 +144,18 @@ resource "aws_glue_catalog_table" "workouts_table" {
   }
 }
 
-
-resource "aws_glue_catalog_table" "workouts_table_csv" {
+resource "aws_glue_catalog_table" "workouts_table_parquet" {
   database_name = aws_athena_database.athena_workouts_database.name
-  name          = "workouts_${var.caller_identity_id}_csv"
+  name          = "workouts_${var.caller_identity_id}_parquet"
   table_type    = "EXTERNAL_TABLE"
 
   storage_descriptor {
-    location      = "s3://${var.data_bucket}/sorted_workouts_csv" // S3 location for normalized CSVs
-    input_format  = "org.apache.hadoop.mapred.TextInputFormat"
-    output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
+    location      = "s3://${var.data_bucket}/sorted_workouts_parquet"
+    input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+    output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
 
     ser_de_info {
-      name                  = "workouts_csv_${var.caller_identity_id}"
-      serialization_library = "org.apache.hadoop.hive.serde2.OpenCSVSerde"
-      parameters = {
-        "separatorChar" = ","
-        "quoteChar"     = "\""
-        "escapeChar"    = "\\"
-      }
+      serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
     }
 
     columns {
@@ -242,10 +235,6 @@ resource "aws_glue_catalog_table" "workouts_table_csv" {
       type = "string"
     }
     columns {
-      name = "exercise_other_muscles"
-      type = "string"
-    }
-    columns {
       name = "exercise_equipment_category"
       type = "string"
     }
@@ -255,10 +244,6 @@ resource "aws_glue_catalog_table" "workouts_table_csv" {
     }
     columns {
       name = "set_id"
-      type = "string"
-    }
-    columns {
-      name = "set_prs"
       type = "string"
     }
     columns {
@@ -284,10 +269,6 @@ resource "aws_glue_catalog_table" "workouts_table_csv" {
     columns {
       name = "set_distance_meters"
       type = "double"
-    }
-    columns {
-      name = "set_personalRecords"
-      type = "string"
     }
     columns {
       name = "set_duration_seconds"

@@ -114,7 +114,7 @@ agent = initialize_agent(
 
 response = agent.invoke(
     {
-        "input": "on what body or muscle part my second latest workout was focused?"
+        "input": "at what part of the day i was mostly execercising in 2024?"
     }  # Example input
 )
 print(response["output"])
