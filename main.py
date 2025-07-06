@@ -26,15 +26,21 @@ def get_glue_table_schema(input: str) -> str:
     body = payload.get("body") or json.loads(payload["body"])
     db_name = body["database_name"]
     table_name = body["table_name"]
-    data_types = "\n".join(
-        f"- {col}: {dtype}"
-        for col, dtype in zip(body["column_names"], body["data_type"])
+    columns = body[
+        "columns"
+    ]  # columns is a dict with column names as keys and their types and comments as values
+    column_names = list(columns.keys())
+    data_types = "\n".join(f"- {col}: {info['type']}" for col, info in columns.items())
+    comments = "\n".join(
+        f"- {col}: {info.get('comment', 'no comment')}" for col, info in columns.items()
     )
 
     return f"""Database name: `{db_name}`
 Table name: `{table_name}`
-Columns and Data Types:
-{data_types}"""
+Data Types:
+{data_types}
+Comments:
+{comments}"""
 
 
 @tool
@@ -108,7 +114,7 @@ agent = initialize_agent(
 
 response = agent.invoke(
     {
-        "input": "at what part of the day I exercised the most within the 2024?"
+        "input": "on what body or muscle part my second latest workout was focused?"
     }  # Example input
 )
 print(response["output"])
