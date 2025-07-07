@@ -310,3 +310,10 @@ def lambda_handler(event, context):
         register_file_in_dynamodb(table_name, item)
 
     update_latest_workout_parameter_store(table_name)
+
+
+if __name__ == "__main__":
+    event = {}
+    context = None
+    result = lambda_handler(event, context)
+    print(result)

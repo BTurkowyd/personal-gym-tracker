@@ -19,28 +19,28 @@ lambda_client = boto3.client("lambda", region_name=region)
 
 @tool
 def get_glue_table_schema(input: str) -> str:
-    """Return schema: database name, table name, column names (bullet points)."""
+    """Return schemas for workouts, exercises, and sets tables: table name, column names, types, and comments."""
     response = lambda_client.invoke(FunctionName="GetGlueTableSchema", Payload=b"{}")
     payload = json.loads(response["Payload"].read().decode("utf-8"))
 
+    # The lambda now returns a dict with keys: workouts, exercises, sets
     body = payload.get("body") or json.loads(payload["body"])
-    db_name = body["database_name"]
-    table_name = body["table_name"]
-    columns = body[
-        "columns"
-    ]  # columns is a dict with column names as keys and their types and comments as values
-    column_names = list(columns.keys())
-    data_types = "\n".join(f"- {col}: {info['type']}" for col, info in columns.items())
-    comments = "\n".join(
-        f"- {col}: {info.get('comment', 'no comment')}" for col, info in columns.items()
-    )
+    if isinstance(body, str):
+        body = json.loads(body)
 
-    return f"""Database name: `{db_name}`
-Table name: `{table_name}`
-Data Types:
-{data_types}
-Comments:
-{comments}"""
+    result = []
+    for label in ["workouts", "exercises", "sets"]:
+        table = body[label]
+        table_name = table["table_name"]
+        columns = table["columns"]
+        data_types = "\n".join(f"- {col['name']}: {col['type']}" for col in columns)
+        comments = "\n".join(
+            f"- {col['name']}: {col.get('comment', 'no comment')}" for col in columns
+        )
+        result.append(
+            f"Table `{table_name}` ({label}):\nData Types:\n{data_types}\nComments:\n{comments}"
+        )
+    return "\n\n".join(result)
 
 
 @tool
@@ -79,7 +79,7 @@ def execute_athena_query(input: str) -> str:
     return f"Results for query:\n{input}\n\n{formatted_rows}"
 
 
-tools = [get_glue_table_schema, execute_athena_query]
+tools = [execute_athena_query]
 
 agent = initialize_agent(
     tools=tools,
@@ -88,82 +88,127 @@ agent = initialize_agent(
     verbose=True,
     agent_kwargs={
         "system_message": """
-You are a data assistant specialized in analyzing AWS Glue tables via Athena using **Trino SQL syntax**.
+You are a precise and efficient data assistant specialized in analyzing AWS Glue tables using Athena with Trino SQL syntax.
 
-You have access to two tools:
-- `get_glue_table_schema`: retrieves the schema of a table
-- `execute_athena_query`: runs a SQL query and returns up to 10 rows
+You have access to one tool:
+- `execute_athena_query`: runs a SQL query
 
-Your tasks:
-1. Always begin by calling `get_glue_table_schema` to get exact column names, comments and data types.
-2. Use column names, data types, and comments from the schema to make informed decisions about your queries. THERE ARE NO HIDDEN COLUMNS OR TABLES. What you see in the schema is all that is available, so strictly adhere to it.
-3. Use **Athena (Trino SQL)** dialect and match the schema precisely — **never guess** column names or data types.
-4. For any BIGINT UNIX timestamp column (e.g., `start_time`), **wrap it in `from_unixtime(...)`** when:
-   - extracting parts like year, month, day, hour, etc.
-   - filtering by date ranges
-
-5. For date filtering:
-   - Use `date(from_unixtime(column)) >= date('YYYY-MM-DD')`
-   - NEVER compare BIGINT or TIMESTAMP columns directly to string literals like `'2022-01-01'`
-
-6. DO NOT use `unix_timestamp` or non-Trino-compatible functions. Use only the functions listed below.
-7. DO NOT use backticks in SQL queries.
+DO NOT call any tool to retrieve the table schema — the full schema is already included below. There are NO hidden columns or undocumented fields. Use **only what is in the schema**.
 
 ---
 
-✅ **You may ONLY use the following timestamp functions** (Trino-compliant):
+### 🔧 Rules & Instructions
 
-| ✅ Allowed                                      | 🚫 Forbidden                                     |
-|-----------------------------------------------|--------------------------------------------------|
+1. Use only the columns and data types from the schema below. **Do not guess.**
+2. Match table and column names **exactly** as defined.
+3. Athena uses **Trino SQL dialect**. Write your queries accordingly.
+4. If filtering or extracting parts from a BIGINT UNIX timestamp (e.g., `start_time`, `end_time`):
+   - Wrap it in `from_unixtime(...)` first
+   - Use Trino-compatible functions only (see allowed list below)
+5. To compare with a date:
+   - Use: `date(from_unixtime(column)) >= date('YYYY-MM-DD')`
+   - Never compare BIGINT or TIMESTAMP columns to strings directly
+6. DO NOT use:
+   - `unix_timestamp(...)` (forbidden in Trino)
+   - `DATE_TRUNC(...)` for timestamp comparisons
+   - backticks (\`) in SQL
+7. In `GROUP BY` or `ORDER BY`, never use column aliases — repeat full expressions or use positional indexes (`ORDER BY 2 DESC`)
+8. Use aliases in `SELECT` to improve readability
+9. If the query fails:
+    - Inspect the error message
+    - Revise the query based on column names or type mismatches
+    - Retry **once** with fixes
+10. Be concise. Return results as clean plain-text tables or bullet lists.
+11. Treat “muscle groups” and “body parts” as synonyms.
+12. Interpret “I”, “my”, or “me” as referring to the user’s own data.
+13. Below is the full schema of available tables. Use it as authoritative, there are no other tables or columns that are not described below.
+
+---
+
+### ✅ Allowed Timestamp Functions (Trino Only)
+
+| ✅ Allowed                                      | 🚫 Forbidden                                      |
+|------------------------------------------------|--------------------------------------------------|
 | `from_unixtime(bigint_column)`                | `unix_timestamp(...)`                            |
-| `date(from_unixtime(...))`                    | `HOUR(start_time)` (without wrapping)            |
-| `year(from_unixtime(...))`                    | `YEAR(start_time)`                               |
-| `month(from_unixtime(...))`                   | `start_time BETWEEN '2022-01-01' AND '2022-12-31'` |
-| `day(from_unixtime(...))`                     | Comparing timestamps directly to strings         |
+| `date(from_unixtime(...))`                    | `DATE_TRUNC(...)` for comparisons                |
+| `year(from_unixtime(...))`                    | Comparing timestamps directly to strings         |
+| `month(from_unixtime(...))`                   | `HOUR(start_time)` (without wrapping)            |
+| `day(from_unixtime(...))`                     |                                                  |
 | `hour(from_unixtime(...))`                    |                                                  |
 | `minute(from_unixtime(...))`                  |                                                  |
 | `format_datetime(from_unixtime(...), '...')`  |                                                  |
 
 ---
 
-7. Do **not** use column aliases in `GROUP BY` or `ORDER BY`; instead:
-   - Repeat the full expression (e.g., `GROUP BY hour(from_unixtime(start_time))`)
-   - Or use positional indexes (e.g., `ORDER BY 2 DESC`)
+### 📦 Available Tables and Schema
 
-8. Do use aliases in the `SELECT` clause to improve clarity.
+#### Table: `workouts_926728314305_parquet`
 
-9. On query failure:
-   - Carefully read the error message
-   - Fix issues with column names, types, or functions
-   - Retry the query once
-
-10. Keep answers clear and concise.
-   - Return results as clean plain-text tables or bullet lists
-   - Use markdown formatting if supported
-
-11. Treat “muscle groups” and “body parts” as synonyms when interpreting questions.
-
-12. If the user says “I”, “me”, or “my”, interpret it as referring to their own data in the database.
-
-13. Default to showing 10 rows unless more is explicitly requested.
+| Column              | Type     | Description                                       |
+|---------------------|----------|---------------------------------------------------|
+| id                  | string   | Unique identifier for the workout                |
+| name                | string   | Name of the workout                              |
+| index               | bigint   | Index of the workout                             |
+| user_id             | string   | Unique identifier for the user                   |
+| end_time            | bigint   | End time of the workout (UNIX time)              |
+| username            | string   | Name of the user                                 |
+| created_at          | string   | Creation time of the workout                     |
+| routine_id          | string   | Routine identifier (nullable)                    |
+| start_time          | bigint   | Start time of the workout (UNIX time)            |
+| updated_at          | string   | Last update time of the workout                  |
+| nth_workout         | bigint   | The nth workout in the user's workout history    |
+| comment_count       | bigint   | Number of comments for the workout               |
+| estimated_volume_kg | double   | Estimated volume of the workout in kilograms     |
 
 ---
 
-💡 **Correct Example — group by hour of workout in 2022**:
-```sql
-SELECT 
-  hour(from_unixtime(start_time)) AS workout_hour,
-  COUNT(*) AS workout_count
-FROM "database_name"."table_name"
-WHERE date(from_unixtime(start_time)) BETWEEN date('2022-01-01') AND date('2022-12-31')
-GROUP BY hour(from_unixtime(start_time))
-ORDER BY workout_count DESC;
+#### Table: `exercises_926728314305_parquet`
+
+| Column               | Type     | Description                                      |
+|----------------------|----------|--------------------------------------------------|
+| id                   | string   | Unique identifier for the exercise              |
+| title                | string   | Title of the exercise                           |
+| index                | bigint   | Index of the exercise (nullable)               |
+| user_id              | string   | User identifier (nullable)                      |
+| workout_id           | string   | Unique identifier for the workout               |
+| created_at           | string   | Creation time (nullable)                        |
+| updated_at           | string   | Last update time (nullable)                     |
+| exercise_type        | string   | Type of the exercise                            |
+| equipment_category   | string   | Category of equipment used                      |
+| exercise_template_id | string   | Identifier of the exercise template             |
+| priority             | bigint   | Priority of the exercise                        |
+| muscle_group         | string   | Muscle group targeted by the exercise           |
+
+---
+
+#### Table: `sets_926728314305_parquet`
+
+| Column           | Type     | Description                                        |
+|------------------|----------|----------------------------------------------------|
+| id               | string   | Unique identifier for the set                      |
+| rpe              | double   | Rate of Perceived Exertion                         |
+| reps             | bigint   | Number of repetitions                             |
+| index            | bigint   | Index of the set within the workout               |
+| indicator        | string   | Indicator for the set                             |
+| weight_kg        | double   | Weight lifted in kilograms                        |
+| distance_meters  | double   | Distance covered in meters                        |
+| duration_seconds | bigint   | Duration of the set in seconds                    |
+| exercise_id      | string   | Unique identifier for the exercise                |
+| workout_id       | string   | Unique identifier for the workout                 |
+
+---
+
+### 📌 Final Notes
+
+- Use only the three tables above.
+- The schema is fixed and does not change — treat it as authoritative.
+- Do not use tool calls to retrieve schema. This is everything available.
 """
     },
 )
 
 response = agent.invoke(
     {
-        "input": "return me a list of exercises (including the day, sets, weights, reps) of three first ever workouts"
+        "input": "give me a list of all exercises with their sets, weights, and reps from the last three workouts. Sort them by the day and set index in ascending order. Include the workout name and date.",
     }
 )
