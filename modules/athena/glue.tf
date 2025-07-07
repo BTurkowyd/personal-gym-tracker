@@ -144,13 +144,15 @@ resource "aws_glue_catalog_table" "workouts_table" {
   }
 }
 
+
+// Glue Table for workouts.parquet
 resource "aws_glue_catalog_table" "workouts_table_parquet" {
   database_name = aws_athena_database.athena_workouts_database.name
   name          = "workouts_${var.caller_identity_id}_parquet"
   table_type    = "EXTERNAL_TABLE"
 
   storage_descriptor {
-    location      = "s3://${var.data_bucket}/sorted_workouts_parquet"
+    location      = "s3://${var.data_bucket}/sorted/workouts"
     input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
 
@@ -161,7 +163,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "id"
       type = "string"
-      comment = "Unique identifier for the workout. It remains the same across different exercises and sets within the workout."
+      comment = "Unique identifier for the workout"
     }
     columns {
       name = "name"
@@ -176,7 +178,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "user_id"
       type = "string"
-      comment = "Unique identifier for the user. There is only one user in this table."
+      comment = "Unique identifier for the user"
     }
     columns {
       name = "end_time"
@@ -186,7 +188,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "username"
       type = "string"
-      comment = "Username of the user"
+      comment = "Name of the user"
     }
     columns {
       name = "created_at"
@@ -196,7 +198,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "routine_id"
       type = "string"
-      comment = "Unique identifier for the routine"
+      comment = "Routine identifier (may be null)"
     }
     columns {
       name = "start_time"
@@ -210,12 +212,12 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     }
     columns {
       name = "nth_workout"
-      type = "int"
-      comment = "The nth workout in the user's workout history. Can be used to track or sort workouts chronologically."
+      type = "bigint"
+      comment = "The nth workout in the user's workout history"
     }
     columns {
       name = "comment_count"
-      type = "int"
+      type = "bigint"
       comment = "Number of comments for the workout"
     }
     columns {
@@ -223,85 +225,151 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
       type = "double"
       comment = "Estimated volume of the workout in kg"
     }
+  }
+}
+
+// Glue Table for exercises.parquet
+resource "aws_glue_catalog_table" "exercises_table_parquet" {
+  database_name = aws_athena_database.athena_workouts_database.name
+  name          = "exercises_${var.caller_identity_id}_parquet"
+  table_type    = "EXTERNAL_TABLE"
+
+  storage_descriptor {
+    location      = "s3://${var.data_bucket}/sorted/exercises"
+    input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+    output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+
+    ser_de_info {
+      serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+    }
+
     columns {
-      name = "exercise_id"
+      name = "id"
       type = "string"
-      comment = "Unique identifier for the exercise. It remains the same across different sets within the exercise."
+      comment = "Unique identifier for the exercise"
     }
     columns {
-      name = "exercise_title"
+      name = "title"
       type = "string"
       comment = "Title of the exercise"
     }
     columns {
-      name = "exercise_priority"
-      type = "int"
-      comment = "Priority of the exercise"
+      name = "index"
+      type = "bigint"
+      comment = "Index of the exercise (may be null)"
     }
     columns {
-      name = "exercise_muscle_group"
+      name = "user_id"
       type = "string"
-      comment = "Muscle group targeted by the exercise"
+      comment = "User identifier (may be null)"
     }
     columns {
-      name = "exercise_rest_seconds"
-      type = "int"
-      comment = "Rest time between sets for the exercise"
+      name = "workout_id"
+      type = "string"
+      comment = "Unique identifier for the workout"
     }
     columns {
-      name = "exercise_exercise_type"
+      name = "created_at"
+      type = "string"
+      comment = "Creation time (may be null)"
+    }
+    columns {
+      name = "updated_at"
+      type = "string"
+      comment = "Last update time (may be null)"
+    }
+    columns {
+      name = "exercise_type"
       type = "string"
       comment = "Type of the exercise"
     }
     columns {
-      name = "exercise_equipment_category"
+      name = "equipment_category"
       type = "string"
-      comment = "Equipment category for the exercise"
+      comment = "Category of equipment used for the exercise"
     }
     columns {
-      name = "exercise_exercise_template_id"
+      name = "exercise_template_id"
       type = "string"
       comment = "Unique identifier for the exercise template"
     }
     columns {
-      name = "set_id"
+      name = "priority"
+      type = "bigint"
+      comment = "Priority of the exercise"
+    }
+    columns {
+      name = "muscle_group"
+      type = "string"
+      comment = "Muscle group targeted by the exercise"
+    }
+  }
+}
+
+// Glue Table for sets.parquet
+resource "aws_glue_catalog_table" "sets_table_parquet" {
+  database_name = aws_athena_database.athena_workouts_database.name
+  name          = "sets_${var.caller_identity_id}_parquet"
+  table_type    = "EXTERNAL_TABLE"
+
+  storage_descriptor {
+    location      = "s3://${var.data_bucket}/sorted/sets"
+    input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+    output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+
+    ser_de_info {
+      serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+    }
+
+    columns {
+      name = "id"
       type = "string"
       comment = "Unique identifier for the set"
     }
     columns {
-      name = "set_rpe"
+      name = "rpe"
       type = "double"
       comment = "Rate of Perceived Exertion for the set"
     }
     columns {
-      name = "set_reps"
-      type = "int"
+      name = "reps"
+      type = "bigint"
       comment = "Number of repetitions for the set"
     }
     columns {
-      name = "set_index"
-      type = "int"
-      comment = "Index of the set"
+      name = "index"
+      type = "bigint"
+      comment = "Index of the set within the workout"
     }
     columns {
-      name = "set_indicator"
+      name = "indicator"
       type = "string"
       comment = "Indicator for the set"
     }
     columns {
-      name = "set_weight_kg"
+      name = "weight_kg"
       type = "double"
       comment = "Weight lifted for the set in kg"
     }
     columns {
-      name = "set_distance_meters"
+      name = "distance_meters"
       type = "double"
-      comment = "Distance covered for the set in meters"
+      comment = "Distance covered during the set in meters"
     }
     columns {
-      name = "set_duration_seconds"
-      type = "int"
+      name = "duration_seconds"
+      type = "bigint"
       comment = "Duration of the set in seconds"
+    }
+    columns {
+      name = "exercise_id"
+      type = "string"
+      comment = "Unique identifier for the exercise"
+    }
+    columns {
+      name = "workout_id"
+      type = "string"
+      comment = "Unique identifier for the workout"
     }
   }
 }
