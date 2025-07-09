@@ -1,5 +1,6 @@
 import boto3
 import json
+import logging
 from langchain_core.tools import tool
 from langchain_aws import ChatBedrock
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -7,6 +8,12 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from typing import Annotated, TypedDict
+
+# Configure logging to show detailed agent interactions
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 region = "eu-central-1"
@@ -27,10 +34,15 @@ _tool_cache = {}
 @tool
 def get_glue_table_schema(input: str) -> str:
     """Return schemas for workouts, exercises, and sets tables: table name, column names, types, and comments."""
+    print("🔍 TOOL CALL: get_glue_table_schema")
+    print(f"📥 Input: {input}")
+
     cache_key = "glue_schema"
     if cache_key in _tool_cache:
+        print("💾 Using cached schema result")
         return _tool_cache[cache_key]
 
+    print("🌐 Calling Lambda function: GetGlueTableSchema")
     response = lambda_client.invoke(FunctionName="GetGlueTableSchema", Payload=b"{}")
     payload = json.loads(response["Payload"].read().decode("utf-8"))
 
@@ -52,22 +64,40 @@ def get_glue_table_schema(input: str) -> str:
             f"Table `{table_name}` ({label}):\nData Types:\n{data_types}\nComments:\n{comments}"
         )
 
-    _tool_cache[cache_key] = "\n\n".join(result)
-    return _tool_cache[cache_key]
+    final_result = "\n\n".join(result)
+    _tool_cache[cache_key] = final_result
+
+    print("✅ Schema retrieved successfully")
+    print(
+        f"📊 Found {len(result)} tables: {', '.join([label for label in ['workouts', 'exercises', 'sets']])}"
+    )
+
+    return final_result
 
 
 @tool
 def execute_athena_query(input: str) -> str:
     """Executes an Athena SQL query and returns up to 10 rows. Returns error info if the query fails."""
+    print("🔍 TOOL CALL: execute_athena_query")
+    print(f"📥 SQL Query:\n{input}")
+
     import re
 
     # Add basic error handling for common mistakes
     if "DATE_FORMAT" in input:
-        return f"ERROR: DATE_FORMAT is not supported in Trino. Use format_datetime(from_unixtime(...), 'format') instead.\nQuery:\n{input}"
+        error_msg = f"ERROR: DATE_FORMAT is not supported in Trino. Use format_datetime(from_unixtime(...), 'format') instead.\nQuery:\n{input}"
+        print(f"❌ Validation Error: {error_msg}")
+        return error_msg
     if "unix_timestamp" in input.lower():
-        return f"ERROR: unix_timestamp is not supported in Trino. Use from_unixtime(...) instead.\nQuery:\n{input}"
+        error_msg = f"ERROR: unix_timestamp is not supported in Trino. Use from_unixtime(...) instead.\nQuery:\n{input}"
+        print(f"❌ Validation Error: {error_msg}")
+        return error_msg
     if 'LIKE "' in input:
-        return f"ERROR: Use single quotes for string literals in LIKE clauses. Double quotes are for identifiers only.\nQuery:\n{input}"  # Check for common column name mistakes in WHERE/FROM/JOIN clauses (not SELECT aliases)
+        error_msg = f"ERROR: Use single quotes for string literals in LIKE clauses. Double quotes are for identifiers only.\nQuery:\n{input}"
+        print(f"❌ Validation Error: {error_msg}")
+        return error_msg
+
+    # Check for common column name mistakes in WHERE/FROM/JOIN clauses (not SELECT aliases)
     common_mistakes = [
         ("s.date", "s.created_at or w.start_time"),
         ("e.name", "e.title"),
@@ -83,7 +113,9 @@ def execute_athena_query(input: str) -> str:
         if any(keyword in line_lower for keyword in ["where", "from", "join", "on"]):
             for mistake, correction in common_mistakes:
                 if mistake in line:
-                    return f"ERROR: Column '{mistake}' does not exist. Use '{correction}' instead.\nQuery:\n{input}"
+                    error_msg = f"ERROR: Column '{mistake}' does not exist. Use '{correction}' instead.\nQuery:\n{input}"
+                    print(f"❌ Column Error: {error_msg}")
+                    return error_msg
 
     # Check for aliases being used in GROUP BY or ORDER BY clauses
     group_by_alias_pattern = (
@@ -92,7 +124,9 @@ def execute_athena_query(input: str) -> str:
     order_by_alias_pattern = r"ORDER\s+BY\s+[a-zA-Z_][a-zA-Z0-9_]*(?:\s+(?:ASC|DESC))?(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*(?:\s+(?:ASC|DESC))?)*"
 
     if re.search(group_by_alias_pattern, input, re.IGNORECASE):
-        return f"ERROR: Cannot use column aliases in GROUP BY clause. Use the full expression instead.\nExample: GROUP BY DATE(FROM_UNIXTIME(CAST(w.start_time AS DOUBLE)))\nQuery:\n{input}"
+        error_msg = f"ERROR: Cannot use column aliases in GROUP BY clause. Use the full expression instead.\nExample: GROUP BY DATE(FROM_UNIXTIME(CAST(w.start_time AS DOUBLE)))\nQuery:\n{input}"
+        print(f"❌ GROUP BY Error: {error_msg}")
+        return error_msg
 
     if re.search(order_by_alias_pattern, input, re.IGNORECASE):
         # Check if it's actually an alias (simple identifier) vs a function/expression
@@ -103,14 +137,21 @@ def execute_athena_query(input: str) -> str:
             order_by_field = order_by_match.group(1)
             # If it doesn't contain parentheses or dots, it's likely an alias
             if "(" not in order_by_field and "." not in order_by_field:
-                return f"ERROR: Cannot use column alias '{order_by_field}' in ORDER BY clause. Use the full expression instead.\nExample: ORDER BY SUM(s.weight_kg * s.reps) DESC\nQuery:\n{input}"
+                error_msg = f"ERROR: Cannot use column alias '{order_by_field}' in ORDER BY clause. Use the full expression instead.\nExample: ORDER BY SUM(s.weight_kg * s.reps) DESC\nQuery:\n{input}"
+                print(f"❌ ORDER BY Error: {error_msg}")
+                return error_msg
 
     # Check for any string equality comparisons - always enforce LIKE for strings
     # Look for patterns like column_name = 'value' for string columns (but not numeric comparisons)
     string_equality_pattern = r"[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*'[^']*'"
     if re.search(string_equality_pattern, input):
         matches = re.findall(string_equality_pattern, input)
-        return f"ERROR: Always use LIKE with wildcards for string matching, never use exact equality (=). Found: {matches}\nExample: WHERE LOWER(title) LIKE LOWER('%Squat%') AND LOWER(equipment_category) LIKE LOWER('%barbell%')\nQuery:\n{input}"
+        error_msg = f"ERROR: Always use LIKE with wildcards for string matching, never use exact equality (=). Found: {matches}\nExample: WHERE LOWER(title) LIKE LOWER('%Squat%') AND LOWER(equipment_category) LIKE LOWER('%barbell%')\nQuery:\n{input}"
+        print(f"❌ String Equality Error: {error_msg}")
+        return error_msg
+
+    print("✅ Query validation passed")
+    print("🌐 Executing query via Lambda function: ExecuteAthenaQuery")
 
     payload = {"query": input}
     response = lambda_client.invoke(
@@ -121,28 +162,43 @@ def execute_athena_query(input: str) -> str:
     raw_body = response["Payload"].read().decode("utf-8").strip()
 
     if not raw_body:
-        return f"ERROR: Empty response from Lambda for query:\n{input}"
+        error_msg = f"ERROR: Empty response from Lambda for query:\n{input}"
+        print(f"❌ Lambda Error: {error_msg}")
+        return error_msg
 
     try:
         parsed = json.loads(raw_body)
     except json.JSONDecodeError as e:
-        return f"ERROR: Failed to parse Lambda response. Raw body:\n{raw_body}"
+        error_msg = f"ERROR: Failed to parse Lambda response. Raw body:\n{raw_body}"
+        print(f"❌ Parse Error: {error_msg}")
+        return error_msg
 
     body = parsed.get("body")
     if body is None:
-        return f"ERROR: Athena query failed or returned no response.\nQuery:\n{input}\nRaw Lambda response:\n{raw_body}"
+        error_msg = f"ERROR: Athena query failed or returned no response.\nQuery:\n{input}\nRaw Lambda response:\n{raw_body}"
+        print(f"❌ Athena Error: {error_msg}")
+        return error_msg
     if isinstance(body, str):
         try:
             body = json.loads(body)
         except json.JSONDecodeError:
-            return f"ERROR: Failed to parse 'body' as JSON: {body}"
+            error_msg = f"ERROR: Failed to parse 'body' as JSON: {body}"
+            print(f"❌ Body Parse Error: {error_msg}")
+            return error_msg
 
     if not isinstance(body, dict) or "rows" not in body:
-        return f"ERROR: Athena query failed or returned no rows.\nQuery:\n{input}\nError:\n{body}"
+        error_msg = f"ERROR: Athena query failed or returned no rows.\nQuery:\n{input}\nError:\n{body}"
+        print(f"❌ Query Result Error: {error_msg}")
+        return error_msg
 
     rows = body["rows"]
     formatted_rows = "\n".join(", ".join(row) for row in rows[1:])  # skip headers
-    return f"Results for query:\n{input}\n\n{formatted_rows}"
+    result = f"Results for query:\n{input}\n\n{formatted_rows}"
+
+    print(f"✅ Query executed successfully")
+    print(f"📊 Retrieved {len(rows)-1} rows of data")
+
+    return result
 
 
 tools = [get_glue_table_schema, execute_athena_query]
@@ -160,6 +216,27 @@ llm_with_tools = llm.bind_tools(tools)
 # Define the agent node
 def agent_node(state: State):
     """The main agent node that processes messages and decides on actions"""
+    print("\n" + "=" * 60)
+    print("🤖 AGENT REASONING PHASE")
+    print("=" * 60)
+
+    # Show current message count and recent messages
+    message_count = len(state["messages"])
+    print(f"📝 Processing message {message_count} in conversation")
+
+    # Show the last user message or system message
+    if state["messages"]:
+        last_message = state["messages"][-1]
+        message_type = type(last_message).__name__
+        print(f"📩 Last message type: {message_type}")
+        if hasattr(last_message, "content"):
+            content_preview = (
+                last_message.content[:200] + "..."
+                if len(last_message.content) > 200
+                else last_message.content
+            )
+            print(f"📄 Content preview: {content_preview}")
+
     system_message = SystemMessage(
         content="""
 You are a data assistant specialized in analyzing AWS Glue tables via Athena using Trino SQL syntax.
@@ -214,7 +291,35 @@ INCORRECT EXAMPLES:
     )
 
     messages = [system_message] + state["messages"]
+    print(f"🧠 Sending {len(messages)} messages to LLM for reasoning...")
+
+    print("\n🔄 CALLING BEDROCK LLM...")
     response = llm_with_tools.invoke(messages)
+
+    print("✅ LLM Response received")
+    print(f"📄 Response type: {type(response).__name__}")
+
+    # Check if the response contains tool calls
+    if (
+        hasattr(response, "additional_kwargs")
+        and "tool_calls" in response.additional_kwargs
+    ):
+        tool_calls = response.additional_kwargs["tool_calls"]
+        if tool_calls:
+            print(f"🔧 Agent wants to use {len(tool_calls)} tools:")
+            for i, tool_call in enumerate(tool_calls, 1):
+                tool_name = tool_call.get("function", {}).get("name", "Unknown tool")
+                print(f"  {i}. {tool_name}")
+    elif hasattr(response, "content") and response.content:
+        print("💬 Agent provided direct response (no tool calls)")
+        content_str = str(response.content)
+        content_preview = (
+            content_str[:100] + "..." if len(content_str) > 100 else content_str
+        )
+        print(f"📝 Content preview: {content_preview}")
+
+    print("=" * 60)
+
     return {"messages": [response]}
 
 
@@ -244,11 +349,68 @@ graph = workflow.compile()
 # Function to run the agent
 def run_agent(query: str):
     """Run the LangGraph agent with the given query"""
-    print(f"Processing query: {query}")
+    print("\n" + "=" * 80)
+    print("🚀 STARTING AGENT EXECUTION")
+    print("=" * 80)
+    print(f"📝 User Query: {query}")
+    print("=" * 80)
 
-    result = graph.invoke({"messages": [HumanMessage(content=query)]})
+    # Stream the graph execution to see each step
+    events = []
+    initial_state: State = {"messages": [HumanMessage(content=query)]}
 
-    return result["messages"][-1].content
+    print("\n🔄 AGENT WORKFLOW EXECUTION:")
+    print("-" * 50)
+
+    step_count = 0
+    try:
+        for event in graph.stream(initial_state):
+            step_count += 1
+            print(f"\n📍 STEP {step_count}: {list(event.keys())}")
+
+            # Store event for analysis
+            events.append(event)
+
+            # Update state
+            for node_name, node_output in event.items():
+                if node_output and "messages" in node_output:
+                    print(
+                        f"   🔄 Node '{node_name}' produced {len(node_output['messages'])} messages"
+                    )
+
+                    # Show the latest message content if it's not a tool call
+                    if node_output["messages"]:
+                        latest_msg = node_output["messages"][-1]
+                        if hasattr(latest_msg, "content") and latest_msg.content:
+                            msg_content = str(latest_msg.content)
+                            if not (
+                                hasattr(latest_msg, "additional_kwargs")
+                                and "tool_calls" in latest_msg.additional_kwargs
+                            ):
+                                content_preview = (
+                                    msg_content[:150] + "..."
+                                    if len(msg_content) > 150
+                                    else msg_content
+                                )
+                                print(f"   💬 Message content: {content_preview}")
+
+        print("\n" + "=" * 80)
+        print("✅ AGENT EXECUTION COMPLETED")
+        print("=" * 80)
+
+        # Get the final result by running the full graph
+        final_result = graph.invoke(initial_state)
+        final_content = final_result["messages"][-1].content
+
+        print(f"📊 Total steps executed: {step_count}")
+        print(f"📝 Final message count: {len(final_result['messages'])}")
+
+        return final_content
+
+    except Exception as e:
+        print(f"\n❌ ERROR during agent execution: {str(e)}")
+        print("=" * 80)
+        raise
 
 
 # Run the agent
