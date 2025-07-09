@@ -44,22 +44,22 @@ resource "aws_glue_catalog_table" "workouts_table" {
     columns {
       name = "start_time"
       type = "timestamp"
-      comment = "Start time of the workout"
+      comment = "Start time of the workout. Can be used to determine when the workout began"
     }
     columns {
       name = "end_time"
       type = "timestamp"
-      comment = "End time of the workout"
+      comment = "End time of the workout. Can be used to determine when the workout ended"
     }
     columns {
       name = "created_at"
       type = "string"
-      comment = "Creation time of the workout"
+      comment = "Creation time of the workout. Can be used to determine when the record was created"
     }
     columns {
       name = "updated_at"
       type = "string"
-      comment = "Last update time of the workout"
+      comment = "Last update time of the workout. Can be used to determine when the record was last updated"
     }
     columns {
       name = "apple_watch"
@@ -94,7 +94,7 @@ resource "aws_glue_catalog_table" "workouts_table" {
     columns {
       name = "nth_workout"
       type = "int"
-      comment = "Indicates the nth workout for the user"
+      comment = "Indicates the nth workout for the user. This can be used to track the user's workout history"
     }
     columns {
       name = "like_count"
@@ -148,7 +148,7 @@ resource "aws_glue_catalog_table" "workouts_table" {
 // Glue Table for workouts.parquet
 resource "aws_glue_catalog_table" "workouts_table_parquet" {
   database_name = aws_athena_database.athena_workouts_database.name
-  name          = "workouts_${var.caller_identity_id}_parquet"
+  name          = "workouts"
   table_type    = "EXTERNAL_TABLE"
 
   storage_descriptor {
@@ -183,7 +183,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "end_time"
       type = "bigint"
-      comment = "End time of the workout"
+      comment = "End time of the workout. Can be used to determine when the workout ended"
     }
     columns {
       name = "username"
@@ -193,7 +193,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "created_at"
       type = "string"
-      comment = "Creation time of the workout"
+      comment = "Creation time of the workout. Can be used to determine when the record was created"
     }
     columns {
       name = "routine_id"
@@ -203,17 +203,17 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
     columns {
       name = "start_time"
       type = "bigint"
-      comment = "Start time of the workout"
+      comment = "Start time of the workout. Can be used to determine when the workout began"
     }
     columns {
       name = "updated_at"
       type = "string"
-      comment = "Last update time of the workout"
+      comment = "Last update time of the workout. Can be used to determine when the record was last updated"
     }
     columns {
       name = "nth_workout"
       type = "bigint"
-      comment = "The nth workout in the user's workout history"
+      comment = "The nth workout in the user's workout history. This can be used to track the user's workout progression"
     }
     columns {
       name = "comment_count"
@@ -231,7 +231,7 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
 // Glue Table for exercises.parquet
 resource "aws_glue_catalog_table" "exercises_table_parquet" {
   database_name = aws_athena_database.athena_workouts_database.name
-  name          = "exercises_${var.caller_identity_id}_parquet"
+  name          = "exercises"
   table_type    = "EXTERNAL_TABLE"
 
   storage_descriptor {
@@ -246,12 +246,12 @@ resource "aws_glue_catalog_table" "exercises_table_parquet" {
     columns {
       name = "id"
       type = "string"
-      comment = "Unique identifier for the exercise"
+      comment = "Unique identifier for the exercise. Uniquely identifies the exercise within the workout"
     }
     columns {
       name = "title"
       type = "string"
-      comment = "Title of the exercise"
+      comment = "Name of the exercise"
     }
     columns {
       name = "index"
@@ -266,7 +266,7 @@ resource "aws_glue_catalog_table" "exercises_table_parquet" {
     columns {
       name = "workout_id"
       type = "string"
-      comment = "Unique identifier for the workout"
+      comment = "Unique identifier for the workout. A foreign key to the workouts table (id)"
     }
     columns {
       name = "created_at"
@@ -286,7 +286,7 @@ resource "aws_glue_catalog_table" "exercises_table_parquet" {
     columns {
       name = "equipment_category"
       type = "string"
-      comment = "Category of equipment used for the exercise"
+      comment = "Type of equipment used for the exercise"
     }
     columns {
       name = "exercise_template_id"
@@ -301,7 +301,7 @@ resource "aws_glue_catalog_table" "exercises_table_parquet" {
     columns {
       name = "muscle_group"
       type = "string"
-      comment = "Muscle group targeted by the exercise"
+      comment = "Muscle group or body part targeted by the exercise"
     }
   }
 }
@@ -309,7 +309,7 @@ resource "aws_glue_catalog_table" "exercises_table_parquet" {
 // Glue Table for sets.parquet
 resource "aws_glue_catalog_table" "sets_table_parquet" {
   database_name = aws_athena_database.athena_workouts_database.name
-  name          = "sets_${var.caller_identity_id}_parquet"
+  name          = "sets"
   table_type    = "EXTERNAL_TABLE"
 
   storage_descriptor {
@@ -324,7 +324,7 @@ resource "aws_glue_catalog_table" "sets_table_parquet" {
     columns {
       name = "id"
       type = "string"
-      comment = "Unique identifier for the set"
+      comment = "Unique identifier for the set. Uniquely identifies the set within the workout"
     }
     columns {
       name = "rpe"
@@ -339,7 +339,7 @@ resource "aws_glue_catalog_table" "sets_table_parquet" {
     columns {
       name = "index"
       type = "bigint"
-      comment = "Index of the set within the workout"
+      comment = "Index of the set within the exercise"
     }
     columns {
       name = "indicator"
@@ -364,12 +364,12 @@ resource "aws_glue_catalog_table" "sets_table_parquet" {
     columns {
       name = "exercise_id"
       type = "string"
-      comment = "Unique identifier for the exercise"
+      comment = "Unique identifier for the exercise. A foreign key to the exercises table (id)"
     }
     columns {
       name = "workout_id"
       type = "string"
-      comment = "Unique identifier for the workout"
+      comment = "Unique identifier for the workout. A foreign key to the workouts table (id)"
     }
   }
 }

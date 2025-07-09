@@ -34,7 +34,13 @@ def lambda_handler(event, context):
         time.sleep(1)
 
     if state != "SUCCEEDED":
-        return {"statusCode": 500, "body": f"Athena query failed with state: {state}"}
+        # Get the error message from Athena if available
+        error_message = f"Athena query failed with state: {state}"
+        if state == "FAILED":
+            status_info = result["QueryExecution"]["Status"]
+            if "StateChangeReason" in status_info:
+                error_message += f" - {status_info['StateChangeReason']}"
+        return {"statusCode": 500, "body": {"error": error_message}}
 
     # Fetch results
     results = athena.get_query_results(QueryExecutionId=execution_id)

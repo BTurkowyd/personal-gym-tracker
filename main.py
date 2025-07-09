@@ -60,6 +60,15 @@ def execute_athena_query(input: str) -> str:
         return f"ERROR: DATE_FORMAT is not supported in Trino. Use format_datetime(from_unixtime(...), 'format') instead.\nQuery:\n{input}"
     if "unix_timestamp" in input.lower():
         return f"ERROR: unix_timestamp is not supported in Trino. Use from_unixtime(...) instead.\nQuery:\n{input}"
+    if 'LIKE "' in input:
+        return f"ERROR: Use single quotes for string literals in LIKE clauses. Double quotes are for identifiers only.\nQuery:\n{input}"  # Check for any string equality comparisons - always enforce LIKE for strings
+    import re
+
+    # Look for patterns like column_name = 'value' for string columns (but not numeric comparisons)
+    string_equality_pattern = r"[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*'[^']*'"
+    if re.search(string_equality_pattern, input):
+        matches = re.findall(string_equality_pattern, input)
+        return f"ERROR: Always use LIKE with wildcards for string matching, never use exact equality (=). Found: {matches}\nExample: WHERE LOWER(title) LIKE LOWER('%Squat%') AND LOWER(equipment_category) LIKE LOWER('%barbell%')\nQuery:\n{input}"
 
     payload = {"query": input}
     response = lambda_client.invoke(
@@ -133,29 +142,29 @@ Rules:
 7. No column aliases in GROUP BY/ORDER BY - use full expressions
 8. If query fails, read error and fix syntax issues
 9. Use proper Trino table name syntax: "database_name"."table_name"
-10. Always use LOWER() for case-insensitive string comparisons
-11. Always use wildcards for string matching, e.g., WHERE title LIKE '%Squat%' AND equipment_category = 'barbell'
+10. MANDATORY: Always use LOWER() for case-insensitive string comparisons
+11. MANDATORY: NEVER use exact equality (=) for ANY string values - ALWAYS use LIKE with wildcards
+12. MANDATORY: String matching format: WHERE LOWER(column) LIKE LOWER('%search_term%')
+13. REASON: Exercise names, equipment categories, and other strings can have slight variations
+14. NEVER use ESCAPE clause - it's not supported in Trino. Use LIKE with proper wildcards or regexp_like() for complex patterns
+15. ALWAYS use single quotes for string literals, NEVER double quotes. Double quotes are for identifiers only.
+16. As a response return the query result in a human-readable format, not JSON or code blocks.
 
-Example for average workout time:
-SELECT 
-  format_datetime(from_unixtime(avg(start_time)), '%H:%i') as avg_time,
-  CASE 
-    WHEN hour(from_unixtime(start_time)) < 12 THEN 'Morning'
-    WHEN hour(from_unixtime(start_time)) < 18 THEN 'Afternoon'
-    ELSE 'Evening'
-  END as period
-FROM table_name
-WHERE year(from_unixtime(start_time)) = 2024
-GROUP BY CASE WHEN hour(from_unixtime(start_time)) < 12 THEN 'Morning'
-              WHEN hour(from_unixtime(start_time)) < 18 THEN 'Afternoon' 
-              ELSE 'Evening' END;
+CORRECT EXAMPLES:
+- WHERE LOWER(e.title) LIKE LOWER('%Squat%') AND LOWER(e.equipment_category) LIKE LOWER('%barbell%')
+- WHERE LOWER(e.muscle_group) LIKE LOWER('%chest%')
+
+INCORRECT EXAMPLES:
+- WHERE e.title = 'Squat' (exact match, case-sensitive)
+- WHERE e.equipment_category = 'barbell' (exact match, case-sensitive)
+- WHERE LOWER(e.title) = LOWER('Squat') (exact match, even if case-insensitive)
 """
     },
 )
 
 response = agent.invoke(
     {
-        "input": "when i did my latest workout for abdominal muscles? Please provide the date and exercises performed.",
+        "input": "On what day I did my latest Squat with 100 kg weight? Please provide the date in YYYY-MM-DD format. Use the workouts table and filter by equipment_category = 'barbell'.",
     }
 )
 
