@@ -37,6 +37,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "lifecycle_policy" {
         id     = "older_than_180_days"
         status = "Enabled"
 
+        filter {
+          prefix = ""
+        }
+
         expiration {
             days = 180
         }

@@ -21,16 +21,16 @@ if TABLE_NAME not in db.table_names():
         TABLE_NAME,
         data=[
             {
-                "user_prompt": str,
+                "user_prompt": "",
                 "query_id": "example_query_id",
-                "sql_query": str,
+                "sql_query": "SELECT * FROM table",
                 "vector": np.zeros(EMBEDDING_SIZE, dtype=np.float32),
-                "tables_used": List[str],
-                "columns_used": List[str],
-                "query_type": List[str],
-                "query_successful": bool,
-                "returned_rows": int,
-                "timestamp": datetime.datetime,
+                "tables_used": ["", ""],
+                "columns_used": ["", ""],
+                "query_type": ["SELECT"],
+                "query_successful": True,
+                "returned_rows": 0,
+                "timestamp": datetime.datetime.now(),
             }
         ],
     )
