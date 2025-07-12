@@ -7,6 +7,7 @@ push-all:
 	packer build -var 'lambda_name=fetch_all_workouts' -var 'ecr_repo_name=fetch-all-workouts' ./packer_docker_template.pkr.hcl && \
 	packer build -var 'lambda_name=discord_bot' -var 'ecr_repo_name=discord-bot-lambda' ./packer_docker_template.pkr.hcl && \
 	packer build -var 'lambda_name=hevy_api_caller' -var 'ecr_repo_name=hevy-api-caller' ./packer_docker_template.pkr.hcl && \
+	packer build -var 'lambda_name=get_table_schema' -var 'ecr_repo_name=get-glue-table-schema' ./packer_docker_template.pkr.hcl && \
 	cd ../../environments/$(STAGE) && \
 	terragrunt apply
 
@@ -28,6 +29,13 @@ push-discord-bot:
 push-hevy-api-caller:
 	cd modules/lambdas && \
 	packer build -var 'lambda_name=hevy_api_caller' -var 'ecr_repo_name=hevy-api-caller' ./packer_docker_template.pkr.hcl && \
+	cd ../../environments/$(STAGE) && \
+	terragrunt apply
+
+# Build and push only the get_table_schema Lambda image, then apply Terraform.
+push-get-table-schema:
+	cd modules/lambdas && \
+	packer build -var 'lambda_name=get_table_schema' -var 'ecr_repo_name=get-glue-table-schema' ./packer_docker_template.pkr.hcl && \
 	cd ../../environments/$(STAGE) && \
 	terragrunt apply
 

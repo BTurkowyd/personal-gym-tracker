@@ -53,21 +53,19 @@ resource "aws_lambda_function" "hevy_api_caller" {
   }
 }
 
-data "archive_file" "get_table_schema" {
-  type        = "zip"
-  source_file = "${path.module}/get_table_schema/get_table_schema.py"
-  output_path = "${path.module}/get_table_schema/get_table_schema.zip"
-}
-
 # Lambda function for fetching Glue table schema (column names) from workouts_database.
 resource "aws_lambda_function" "get_table_schema" {
   function_name = "GetGlueTableSchema"
   role          = var.lambda_role_arn
-  handler       = "get_table_schema.lambda_handler"
-  runtime       = "python3.11"
-  timeout       = 15
-  filename      = data.archive_file.get_table_schema.output_path
-  source_code_hash = data.archive_file.get_table_schema.output_base64sha256
+  package_type  = "Image"
+  image_uri     = "${data.aws_ecr_repository.get_table_schema_repo.repository_url}:latest"
+  timeout       = 120
+  source_code_hash = split(":", data.aws_ecr_image.get_table_schema_latest_image.id)[1]
+  environment {
+    variables = {
+      BUCKET_NAME     = var.lance_db_bucket_name
+    }
+  }
 }
 
 data "archive_file" "execute_query" {
