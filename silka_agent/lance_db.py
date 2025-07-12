@@ -49,16 +49,7 @@ def add_successful_query_to_lancedb(
     query_type = [str(qt) for qt in query_type]
     returned_rows = int(returned_rows)
 
-    combined_text = (
-        f"Prompt: {user_prompt}\n"
-        f"Query ID: {query_id}\n"
-        f"SQL: {sql_query}\n"
-        f"Tables: {', '.join(tables_used)}\n"
-        f"Columns: {', '.join(columns_used)}\n"
-        f"Query Types: {', '.join(query_type)}\n"
-        f"Returned Rows: {returned_rows}"
-    )
-    embedding = titan_embed(combined_text, region=region)
+    embedding = titan_embed(user_prompt, region=region)
 
     record = {
         "user_prompt": user_prompt,

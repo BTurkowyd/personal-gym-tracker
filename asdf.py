@@ -4,7 +4,6 @@ import json
 import numpy as np
 import lancedb
 import boto3
-from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
 load_dotenv(".env")
@@ -73,7 +72,7 @@ def retrieve_relevant_chunks(user_query: str, k: int = 3) -> list[dict]:
 
 if __name__ == "__main__":
     # Example usage
-    user_query = "What were my last 5 workouts?"
+    user_query = "how many workouts in total are recorded?"
     relevant_chunks = retrieve_relevant_chunks(user_query, k=5)
     print("Relevant chunks retrieved:")
     for chunk in relevant_chunks:
