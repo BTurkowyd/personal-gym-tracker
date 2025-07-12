@@ -35,3 +35,8 @@ push-hevy-api-caller:
 apply:
 	cd environments/$(STAGE) && \
 	terragrunt apply
+
+# Create LanceDB database and upload initial data.
+init-lancedb:
+	cd side-scripts/initiate-lance-db && \
+	uv run initiance-lance-db.py
