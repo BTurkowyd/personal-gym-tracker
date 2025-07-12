@@ -45,26 +45,44 @@ def execute_athena_query(input: str) -> str:
         "ExecuteAthenaQuery",
         json.dumps(payload).encode("utf-8"),
     )
-    raw_body = response.get("Payload", "").strip() if isinstance(response, dict) else ""
-    if not raw_body:
-        return f"ERROR: Empty response from Lambda for query:\n{input}"
-    try:
-        parsed = json.loads(raw_body)
-    except json.JSONDecodeError:
-        return f"ERROR: Failed to parse Lambda response. Raw body:\n{raw_body}"
-    body = parsed.get("body")
-    if body is None:
-        return f"ERROR: Athena query failed or returned no response.\nQuery:\n{input}\nRaw Lambda response:\n{raw_body}"
+    # response is a dict: {"statusCode": ..., "body": ...}
+    status = response.get("statusCode")
+    body = response.get("body")
+    # If body is a string, try to parse as JSON
     if isinstance(body, str):
         try:
             body = json.loads(body)
-        except json.JSONDecodeError:
-            return f"ERROR: Failed to parse 'body' as JSON: {body}"
+        except Exception:
+            pass
+    if status != 200:
+        # Error from Lambda
+        error_msg = body.get("error") if isinstance(body, dict) else body
+        return (
+            "\n==================== ATHENA QUERY ERROR ====================\n"
+            f"ERROR: Lambda returned statusCode {status}.\n"
+            f"FULL QUERY:\n{input}\n"
+            f"ERROR CONTENT:\n{error_msg}\n"
+            "==========================================================\n"
+        )
     if not isinstance(body, dict) or "rows" not in body:
-        return f"ERROR: Athena query failed or returned no rows.\nQuery:\n{input}\nError:\n{body}"
+        return (
+            "\n==================== ATHENA QUERY ERROR ====================\n"
+            "ERROR: Athena query failed or returned no rows.\n"
+            f"FULL QUERY:\n{input}\n"
+            f"ERROR CONTENT:\n{json.dumps(body, indent=2) if isinstance(body, dict) else body}\n"
+            "==========================================================\n"
+        )
     rows = body["rows"]
+    # If only header or no data rows, return a clear marker
+    if len(rows) <= 1:
+        return "NO_DATA: Athena query returned no results.\n" f"FULL QUERY:\n{input}\n"
     formatted_rows = "\n".join(", ".join(row) for row in rows[1:])
-    return f"Results for query:\n{input}\n\n{formatted_rows}"
+    return (
+        "\n==================== ATHENA QUERY RESULT ====================\n"
+        "RESULTS FOR QUERY (FULL QUERY SHOWN):\n"
+        f"{input}\n\n{formatted_rows}\n"
+        "===========================================================\n"
+    )
 
 
 tools = [get_glue_table_schema, execute_athena_query]

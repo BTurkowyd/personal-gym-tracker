@@ -45,6 +45,7 @@ def run_agent(query: str):
     print("-" * 50)
     step_count = 0
     try:
+        last_message = None
         for event in graph.stream(initial_state):
             step_count += 1
             print(f"\n📍 STEP {step_count}: {list(event.keys())}")
@@ -56,6 +57,7 @@ def run_agent(query: str):
                     )
                     if node_output["messages"]:
                         latest_msg = node_output["messages"][-1]
+                        last_message = latest_msg
                         if hasattr(latest_msg, "content") and latest_msg.content:
                             msg_content = str(latest_msg.content)
                             if not (
@@ -71,11 +73,13 @@ def run_agent(query: str):
         print("\n" + "=" * 80)
         print("✅ AGENT EXECUTION COMPLETED")
         print("=" * 80)
-        final_result = graph.invoke(initial_state)
-        final_content = final_result["messages"][-1].content
         print(f"📊 Total steps executed: {step_count}")
-        print(f"📝 Final message count: {len(final_result['messages'])}")
-        return final_content
+        print(
+            f"📝 Final message count: {len(events[-1][list(events[-1].keys())[0]]['messages']) if events else 0}"
+        )
+        if last_message and hasattr(last_message, "content"):
+            return last_message.content
+        return None
     except Exception as e:
         print(f"\n❌ ERROR during agent execution: {str(e)}")
         print("=" * 80)
