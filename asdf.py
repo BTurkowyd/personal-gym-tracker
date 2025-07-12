@@ -1,98 +1,80 @@
-import re
+from datetime import datetime
+import os
+import json
+import numpy as np
+import lancedb
+import boto3
+from botocore.exceptions import ClientError
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+
+bucket_name = os.getenv("BUCKET_NAME")
+region = os.getenv("AWS_REGION", "eu-central-1")  # Set your default region
 
 
-def extract_sql_metadata_regex(sql_query: str) -> dict:
-    """Extract tables and columns using regex patterns, excluding aliases."""
-    tables = set()
-    columns = set()
+DB_PATH = f"s3://{bucket_name}/lancedb"
+TABLE_NAME = "workout_queries"
 
-    # Extract table names from FROM and JOIN clauses (excluding aliases)
-    from_pattern = r"FROM\s+([a-zA-Z_][a-zA-Z0-9_]*)"
-    join_pattern = r"JOIN\s+([a-zA-Z_][a-zA-Z0-9_]*)"
 
-    from_matches = re.findall(from_pattern, sql_query, re.IGNORECASE)
-    join_matches = re.findall(join_pattern, sql_query, re.IGNORECASE)
+def get_bedrock_client():
+    return boto3.client("bedrock-runtime", region_name="eu-central-1")
 
-    tables.update(from_matches)
-    tables.update(join_matches)
 
-    # Build alias mapping to exclude them
-    alias_pattern = r"FROM\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)|JOIN\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)"
-    alias_matches = re.findall(alias_pattern, sql_query, re.IGNORECASE)
+def embed_text(text):
+    client = get_bedrock_client()
+    model_id = "amazon.titan-embed-text-v2:0"
 
-    # Create set of known aliases
-    aliases = set()
-    for match in alias_matches:
-        if match[1]:  # FROM table alias
-            aliases.add(match[1])
-        if match[3]:  # JOIN table alias
-            aliases.add(match[3])
+    response = client.invoke_model(
+        modelId=model_id,
+        contentType="application/json",
+        accept="application/json",
+        body=json.dumps({"inputText": text}),
+    )
 
-    # Extract column names from table.column patterns (excluding aliases)
-    column_pattern = r"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)"
-    table_column_matches = re.findall(column_pattern, sql_query)
+    response_body = json.loads(response["body"].read())
+    return response_body["embedding"]
 
-    for table_alias, column in table_column_matches:
-        if table_alias not in ("DATE", "FROM_UNIXTIME", "CAST", "LOWER", "SUM"):
-            # Only add the column, never add aliases to columns
-            columns.add(column)
-            # Only add table name if it's not an alias
-            if table_alias not in aliases:
-                tables.add(table_alias)
 
-    # Extract standalone column names from SELECT (excluding AS aliases and table.column patterns)
-    select_pattern = r"SELECT\s+(.*?)\s+FROM"
-    select_match = re.search(select_pattern, sql_query, re.IGNORECASE | re.DOTALL)
-    if select_match:
-        select_clause = select_match.group(1)
+def retrieve_relevant_chunks(user_query: str, k: int = 3) -> list[dict]:
 
-        # Remove AS aliases from select clause
-        select_clause = re.sub(
-            r"\s+AS\s+[a-zA-Z_][a-zA-Z0-9_]*", "", select_clause, flags=re.IGNORECASE
-        )
+    db = lancedb.connect(DB_PATH)
+    print(f"Connecting to LanceDB at {DB_PATH}...")
+    print(db.table_names())
+    table = db.open_table(TABLE_NAME)
 
-        # Remove table.column patterns to avoid picking up table aliases
-        select_clause = re.sub(
-            r"\b[a-zA-Z_][a-zA-Z0-9_]*\s*\.\s*[a-zA-Z_][a-zA-Z0-9_]*", "", select_clause
-        )
-
-        # Extract simple column names (standalone, not prefixed)
-        simple_columns = re.findall(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\b", select_clause)
-        for col in simple_columns:
-            if (
-                col.upper()
-                not in (
-                    "DATE",
-                    "FROM_UNIXTIME",
-                    "CAST",
-                    "AS",
-                    "DOUBLE",
-                    "SUM",
-                    "LOWER",
-                    "TOTAL_VOLUME",
-                )
-                and col not in aliases  # Exclude known aliases
-            ):
-                columns.add(col)
-
-    return {
-        "tables_used": list(tables),
-        "columns_used": list(columns),
-        "query_type": ["SELECT"],
-    }
+    k = 20 if k > 20 else k  # Limit k to a maximum of 20
+    query_embedding = np.array(embed_text(user_query), dtype=np.float32)
+    results = table.search(query_embedding).limit(k).to_pandas()
+    print("Raw search results DataFrame:")
+    print(results)
+    if results.empty:
+        print("⚠️  Search returned no results.")
+    # Each row in results is a dict-like object
+    return [
+        {
+            "user_prompt": row["user_prompt"],
+            "query_id": row["query_id"],
+            "sql_query": row["sql_query"],
+            "vector": row["vector"],
+            "tables_used": row["tables_used"],
+            "columns_used": row["columns_used"],
+            "query_type": row["query_type"],
+            "returned_rows": row["returned_rows"],
+            "timestamp": (
+                row["timestamp"].isoformat()
+                if isinstance(row["timestamp"], datetime)
+                else row["timestamp"]
+            ),
+        }
+        for _, row in results.iterrows()
+    ]
 
 
 if __name__ == "__main__":
     # Example usage
-    sql_query = """
-    SELECT e.title, e.equipment_category, SUM(s.weight_kg * s.reps) AS total_volume
-    FROM workouts w
-    JOIN exercises e ON w.exercise_id = e.id
-    JOIN sets s ON w.id = s.workout_id
-    WHERE LOWER(e.title) LIKE LOWER('%Squat%') AND LOWER(e.equipment_category) LIKE LOWER('%barbell%')
-    GROUP BY DATE(FROM_UNIXTIME(CAST(w.start_time AS DOUBLE))), e.title, e.equipment_category
-    ORDER BY total_volume DESC;
-    """
-
-    metadata = extract_sql_metadata_regex(sql_query)
-    print(metadata)
+    user_query = "What were my last 5 workouts?"
+    relevant_chunks = retrieve_relevant_chunks(user_query, k=5)
+    print("Relevant chunks retrieved:")
+    for chunk in relevant_chunks:
+        print(chunk["user_prompt"], chunk["sql_query"], chunk["returned_rows"])
