@@ -77,10 +77,12 @@ def execute_athena_query(input: str) -> str:
     if len(rows) <= 1:
         return "NO_DATA: Athena query returned no results.\n" f"FULL QUERY:\n{input}\n"
     formatted_rows = "\n".join(", ".join(row) for row in rows[1:])
+    header = ", ".join(rows[0])
+    data_block = f"---BEGIN DATA---\n{header}\n{formatted_rows}\n---END DATA---"
     return (
         "\n==================== ATHENA QUERY RESULT ====================\n"
         "RESULTS FOR QUERY (FULL QUERY SHOWN):\n"
-        f"{input}\n\n{formatted_rows}\n"
+        f"{input}\n\n{data_block}\n"
         "===========================================================\n"
     )
 
