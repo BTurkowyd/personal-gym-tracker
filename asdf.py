@@ -6,6 +6,8 @@ import lancedb
 import boto3
 from dotenv import load_dotenv
 
+from silka_agent.lance_db import titan_embed
+
 load_dotenv(".env")
 
 bucket_name = os.getenv("BUCKET_NAME")
@@ -16,12 +18,8 @@ DB_PATH = f"s3://{bucket_name}/lancedb"
 TABLE_NAME = "workout_queries"
 
 
-def get_bedrock_client():
-    return boto3.client("bedrock-runtime", region_name="eu-central-1")
-
-
 def embed_text(text):
-    client = get_bedrock_client()
+    client = boto3.client("bedrock-runtime", region_name="eu-central-1")
     model_id = "amazon.titan-embed-text-v2:0"
 
     response = client.invoke_model(
@@ -43,7 +41,7 @@ def retrieve_relevant_chunks(user_query: str, k: int = 3) -> list[dict]:
     table = db.open_table(TABLE_NAME)
 
     k = 20 if k > 20 else k  # Limit k to a maximum of 20
-    query_embedding = np.array(embed_text(user_query), dtype=np.float32)
+    query_embedding = titan_embed(user_query, region=region)
     results = table.search(query_embedding).limit(k).to_pandas()
     print("Raw search results DataFrame:")
     print(results)
