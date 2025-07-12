@@ -80,19 +80,3 @@ def extract_sql_metadata_regex(sql_query: str) -> dict:
         "columns_used": list(columns),
         "query_type": ["SELECT"],
     }
-
-
-if __name__ == "__main__":
-    # Example usage
-    sql_query = """
-    SELECT e.title, e.equipment_category, SUM(s.weight_kg * s.reps) AS total_volume
-    FROM workouts w
-    JOIN exercises e ON w.exercise_id = e.id
-    JOIN sets s ON w.id = s.workout_id
-    WHERE LOWER(e.title) LIKE LOWER('%Squat%') AND LOWER(e.equipment_category) LIKE LOWER('%barbell%')
-    GROUP BY DATE(FROM_UNIXTIME(CAST(w.start_time AS DOUBLE))), e.title, e.equipment_category
-    ORDER BY total_volume DESC;
-    """
-
-    metadata = extract_sql_metadata_regex(sql_query)
-    print(metadata)

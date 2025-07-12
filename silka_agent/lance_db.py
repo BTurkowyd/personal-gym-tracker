@@ -6,6 +6,7 @@ import numpy as np
 import boto3
 import json
 from dotenv import load_dotenv
+from .sql_metadata import extract_sql_metadata_regex
 
 load_dotenv(".env")
 
@@ -28,12 +29,16 @@ def titan_embed(text: str, region: str = "eu-central-1") -> np.ndarray:
 
 def add_successful_query_to_lancedb(
     sql_query: str,
-    tables_used: list,
-    columns_used: list,
-    query_type: list,
     returned_rows: int,
     region: str = "eu-central-1",
 ):
+
+    # Extract metadata from the SQL query
+    query_metadata = extract_sql_metadata_regex(sql_query)
+    tables_used = query_metadata.get("tables_used", [])
+    columns_used = query_metadata.get("columns_used", [])
+    query_type = query_metadata.get("query_type", ["SELECT"])
+
     # stringify everything for embedding
     # Combine and stringify all relevant fields for embedding
     user_prompt = os.getenv("PROMPT", "")

@@ -38,7 +38,6 @@ def get_glue_table_schema(input: str) -> str:
 @tool
 def execute_athena_query(input: str) -> str:
     """Execute a SQL query on AWS Athena and return the results as a formatted string."""
-    import re
 
     # ...existing validation logic...
     payload = {"query": input}
@@ -78,16 +77,10 @@ def execute_athena_query(input: str) -> str:
     if len(rows) <= 1:
         # here will be the logic to insert the query into LanceDB
         sql_query = input
-        tables_used = []
-        columns_used = []
-        query_type = ["SELECT"]
         returned_rows = len(rows) - 1  # Exclude header row
 
         add_successful_query_to_lancedb(
             sql_query,
-            tables_used,
-            columns_used,
-            query_type,
             returned_rows,
             region=region,
         )
@@ -99,16 +92,10 @@ def execute_athena_query(input: str) -> str:
 
     # here will be the logic to insert the query into LanceDB
     sql_query = input
-    tables_used = []
-    columns_used = []
-    query_type = ["SELECT"]
     returned_rows = len(rows) - 1  # Exclude header row
 
     add_successful_query_to_lancedb(
         sql_query,
-        tables_used,
-        columns_used,
-        query_type,
         returned_rows,
         region=region,
     )
