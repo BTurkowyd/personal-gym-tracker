@@ -48,7 +48,6 @@ def execute_athena_query(input: str) -> str:
     )
     # response is a dict: {"statusCode": ..., "body": ...}
     status = response.get("statusCode")
-    query_id = response.get("queryId")
     body = response.get("body")
     # If body is a string, try to parse as JSON
     if isinstance(body, str):
@@ -78,8 +77,6 @@ def execute_athena_query(input: str) -> str:
     # If only header or no data rows, return a clear marker
     if len(rows) <= 1:
         # here will be the logic to insert the query into LanceDB
-        # here will be the logic to insert the query into LanceDB
-        user_prompt = ""
         sql_query = input
         tables_used = []
         columns_used = []
@@ -87,8 +84,6 @@ def execute_athena_query(input: str) -> str:
         returned_rows = len(rows) - 1  # Exclude header row
 
         add_successful_query_to_lancedb(
-            user_prompt,
-            query_id,
             sql_query,
             tables_used,
             columns_used,
@@ -103,7 +98,6 @@ def execute_athena_query(input: str) -> str:
     data_block = f"---BEGIN DATA---\n{header}\n{formatted_rows}\n---END DATA---"
 
     # here will be the logic to insert the query into LanceDB
-    user_prompt = ""
     sql_query = input
     tables_used = []
     columns_used = []
@@ -111,8 +105,6 @@ def execute_athena_query(input: str) -> str:
     returned_rows = len(rows) - 1  # Exclude header row
 
     add_successful_query_to_lancedb(
-        user_prompt,
-        query_id,
         sql_query,
         tables_used,
         columns_used,

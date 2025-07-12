@@ -27,8 +27,6 @@ def titan_embed(text: str, region: str = "eu-central-1") -> np.ndarray:
 
 
 def add_successful_query_to_lancedb(
-    user_prompt: str,
-    query_id: str,
     sql_query: str,
     tables_used: list,
     columns_used: list,
@@ -38,8 +36,8 @@ def add_successful_query_to_lancedb(
 ):
     # stringify everything for embedding
     # Combine and stringify all relevant fields for embedding
-    user_prompt = str(user_prompt)
-    query_id = str(query_id)
+    user_prompt = os.getenv("PROMPT", "")
+    query_id = uuid.uuid4().hex  # Generate a unique query ID
     sql_query = str(sql_query)
     tables_used = [str(table) for table in tables_used]
     columns_used = [str(column) for column in columns_used]
