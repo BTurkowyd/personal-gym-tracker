@@ -28,7 +28,6 @@ if TABLE_NAME not in db.table_names():
                 "tables_used": ["", ""],
                 "columns_used": ["", ""],
                 "query_type": ["SELECT"],
-                "query_successful": True,
                 "returned_rows": 0,
                 "timestamp": datetime.datetime.now(),
             }

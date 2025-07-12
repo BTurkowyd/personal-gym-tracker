@@ -3,6 +3,7 @@ from .lambda_client import invoke_lambda
 import json
 from .config import region, model_name, model_kwargs
 from langchain_aws import ChatBedrock
+from .lance_db import add_successful_query_to_lancedb
 
 _tool_cache = {}
 
@@ -47,6 +48,7 @@ def execute_athena_query(input: str) -> str:
     )
     # response is a dict: {"statusCode": ..., "body": ...}
     status = response.get("statusCode")
+    query_id = response.get("queryId")
     body = response.get("body")
     # If body is a string, try to parse as JSON
     if isinstance(body, str):
@@ -75,10 +77,50 @@ def execute_athena_query(input: str) -> str:
     rows = body["rows"]
     # If only header or no data rows, return a clear marker
     if len(rows) <= 1:
+        # here will be the logic to insert the query into LanceDB
+        # here will be the logic to insert the query into LanceDB
+        user_prompt = ""
+        sql_query = input
+        tables_used = []
+        columns_used = []
+        query_type = ["SELECT"]
+        returned_rows = len(rows) - 1  # Exclude header row
+
+        add_successful_query_to_lancedb(
+            user_prompt,
+            query_id,
+            sql_query,
+            tables_used,
+            columns_used,
+            query_type,
+            returned_rows,
+            region=region,
+        )
+
         return "NO_DATA: Athena query returned no results.\n" f"FULL QUERY:\n{input}\n"
     formatted_rows = "\n".join(", ".join(row) for row in rows[1:])
     header = ", ".join(rows[0])
     data_block = f"---BEGIN DATA---\n{header}\n{formatted_rows}\n---END DATA---"
+
+    # here will be the logic to insert the query into LanceDB
+    user_prompt = ""
+    sql_query = input
+    tables_used = []
+    columns_used = []
+    query_type = ["SELECT"]
+    returned_rows = len(rows) - 1  # Exclude header row
+
+    add_successful_query_to_lancedb(
+        user_prompt,
+        query_id,
+        sql_query,
+        tables_used,
+        columns_used,
+        query_type,
+        returned_rows,
+        region=region,
+    )
+
     return (
         "\n==================== ATHENA QUERY RESULT ====================\n"
         "RESULTS FOR QUERY (FULL QUERY SHOWN):\n"

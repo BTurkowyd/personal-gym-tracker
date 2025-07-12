@@ -1,39 +1,12 @@
-import datetime
-import os
-from typing import List
-import lancedb
-import numpy as np
-from dotenv import load_dotenv
+import pyarrow.parquet as pq
 
-load_dotenv(".env")
 
-DB_PATH = f"s3://{os.getenv('BUCKET_NAME')}/lancedb"
-TABLE_NAME = "workout_queries"
+def print_parquet_schema(filename):
+    table = pq.read_table(filename)
+    print(f"Schema for {filename}:")
+    print(table.schema)
+    print("-" * 40)
 
-# Connect to LanceDB and get or create the table
-db = lancedb.connect(DB_PATH)
 
-EMBEDDING_SIZE = 1024
-
-if TABLE_NAME not in db.table_names():
-    # Let LanceDB infer the schema from the first record you add
-    table = db.create_table(
-        TABLE_NAME,
-        data=[
-            {
-                "user_prompt": str,
-                "query_id": "example_query_id",
-                "sql_query": str,
-                "vector": np.zeros(EMBEDDING_SIZE, dtype=np.float32),
-                "tables_used": List[str],
-                "columns_used": List[str],
-                "query_type": List[str],
-                "query_successful": bool,
-                "returned_rows": int,
-                "timestamp": datetime.datetime,
-            }
-        ],
-    )
-    table.delete("query_id = 'example_query_id'")  # Remove the dummy row
-else:
-    table = db.open_table(TABLE_NAME)
+for fname in ["e59aef22-aec5-430a-b26e-e01a58ced34c.parquet"]:
+    print_parquet_schema(fname)
