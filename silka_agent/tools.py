@@ -14,10 +14,14 @@ def get_glue_table_schema(input: str) -> str:
     cache_key = "glue_schema"
     if cache_key in _tool_cache:
         return _tool_cache[cache_key]
-    response = invoke_lambda("GetGlueTableSchema", b"{}")
+
+    # Pass the user input as prompt to get relevant chunks
+    payload = {"prompt": input}
+    response = invoke_lambda("GetGlueTableSchema", json.dumps(payload).encode("utf-8"))
     body = response.get("body") or json.loads(response["body"])
     if isinstance(body, str):
         body = json.loads(body)
+
     result = []
     for label in ["workouts", "exercises", "sets"]:
         table = body[label]
@@ -30,6 +34,27 @@ def get_glue_table_schema(input: str) -> str:
         result.append(
             f"Table `{table_name}` ({label}):\nData Types:\n{data_types}\nComments:\n{comments}"
         )
+
+    # Add relevant chunks section
+    relevant_chunks = body.get("relevant_chunks", [])
+    if relevant_chunks:
+        chunks_section = ["RELEVANT SIMILAR QUERIES FROM HISTORY:"]
+        for i, chunk in enumerate(relevant_chunks, 1):
+            chunks_section.append(f"{i}. User Query: {chunk['user_prompt']}")
+            chunks_section.append(f"   SQL Query: {chunk['sql_query']}")
+            chunks_section.append(f"   Tables Used: {', '.join(chunk['tables_used'])}")
+            chunks_section.append(
+                f"   Columns Used: {', '.join(chunk['columns_used'])}"
+            )
+            chunks_section.append(f"   Returned Rows: {chunk['returned_rows']}")
+            chunks_section.append("")  # Empty line for spacing
+
+        result.append("\n".join(chunks_section))
+    else:
+        result.append(
+            "RELEVANT SIMILAR QUERIES FROM HISTORY:\nNo similar queries found in history."
+        )
+
     final_result = "\n\n".join(result)
     _tool_cache[cache_key] = final_result
     return final_result
@@ -102,8 +127,11 @@ def execute_athena_query(input: str) -> str:
 
     return (
         "\n==================== ATHENA QUERY RESULT ====================\n"
+        "CRITICAL: COPY THE DATA BELOW INTO YOUR FINAL ANSWER!\n"
         "RESULTS FOR QUERY (FULL QUERY SHOWN):\n"
         f"{input}\n\n{data_block}\n"
+        "INSTRUCTION: You MUST include the actual data rows above in your response to the user.\n"
+        "Do NOT just describe what the query does - show the real data!\n"
         "===========================================================\n"
     )
 
