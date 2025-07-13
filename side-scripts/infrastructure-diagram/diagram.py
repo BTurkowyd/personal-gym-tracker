@@ -3,6 +3,7 @@ from diagrams.aws.compute import Lambda
 from diagrams.aws.network import APIGateway
 from diagrams.aws.integration import SNS
 from diagrams.onprem.client import Client
+from diagrams.onprem.compute import Server
 from diagrams.onprem.analytics import Superset
 from diagrams.onprem.database import PostgreSQL
 from diagrams.aws.storage import S3
@@ -36,11 +37,6 @@ with Diagram("Infrastructure", show=False):
             glue = Glue("Workout database")
             athena = Athena("Workout SQL executor")
 
-        with Cluster("AI AGENT"):
-            get_table_schema = Lambda("Get Table Schema")
-            execute_query = Lambda("Execute Query")
-            bedrock = Bedrock("Bedrock Claude Model")
-
         # Connections inside AWS Account
         bot >> sns
         sns >> fetch_all
@@ -51,11 +47,24 @@ with Diagram("Infrastructure", show=False):
         hevy_api_caller >> Edge(color="#0033FF") >> dynamodb
         s3 >> glue
         glue >> athena
+
+        with Cluster("AI AGENT", direction="LR"):
+            with Cluster("LLM"):
+                bedrock = Bedrock("Bedrock Claude Model")
+            with Cluster("LANCE DB"):
+                lancedb = Server("LanceDB Vector DB")
+            with Cluster("AI AGENT TOOLS"):
+                # Define tools as Lambda functions
+                get_table_schema = Lambda("Get Table Schema")
+                execute_query = Lambda("Execute Query")
+
         # AI Agent connections
         get_table_schema >> glue
         glue >> get_table_schema  # return arrow
         execute_query >> athena
         athena >> execute_query  # return arrow
+        execute_query >> lancedb
+        lancedb >> get_table_schema
     # Connections outside AWS Account
 
     superset = Superset("Superset")
