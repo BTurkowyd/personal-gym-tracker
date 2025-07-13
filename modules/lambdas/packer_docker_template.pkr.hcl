@@ -26,20 +26,14 @@ build {
 
   // Copy the Lambda handler Python file into the image.
   provisioner "file" {
-    source      = "./${var.lambda_name}/${var.lambda_name}.py"
-    destination = "/var/task/${var.lambda_name}.py"
-  }
-
-  // Copy the requirements.txt file for dependencies.
-  provisioner "file" {
-    source      = "./${var.lambda_name}/requirements.txt"
-    destination = "/requirements.txt"
+    source      = "./${var.lambda_name}/"
+    destination = "/var/task/"
   }
 
   // Install Python dependencies into the Lambda task root.
   provisioner "shell" {
     inline = [
-      "pip install -r /requirements.txt --target $LAMBDA_TASK_ROOT",
+      "pip install -r /var/task/requirements.txt --target $LAMBDA_TASK_ROOT",
     ]
   }
 
