@@ -21,7 +21,6 @@ def lambda_handler(event, context):
 
 
 if __name__ == "__main__":
-    query = "on what days i did my squats with barbell, where the average rep weight in the single set was above 90kg. list all the sets with the date, weight and reps."
-    os.environ["PROMPT"] = query
+    query = "in total how many cable crunch reps i did in 2023?"
 
     lambda_handler({"body": json.dumps({"query": query})}, None)

@@ -70,7 +70,7 @@ def retrieve_relevant_chunks(user_query: str, k: int = 3) -> list[dict]:
 
 if __name__ == "__main__":
     # Example usage
-    user_query = "on what days i did my squats with barbell, where the average rep weight in the single set was above 90kg. list all the sets with the date, weight and reps."
+    user_query = "in total how many cable crunch reps i did in 2023?"
     relevant_chunks = retrieve_relevant_chunks(user_query, k=5)
     print("Relevant chunks retrieved:")
     for chunk in relevant_chunks:
