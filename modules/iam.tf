@@ -31,7 +31,9 @@ resource "aws_iam_role_policy" "s3_access" {
       ]
       Resource = [
         aws_s3_bucket.upload_bucket.arn,
-        "${aws_s3_bucket.upload_bucket.arn}/*"
+        "${aws_s3_bucket.upload_bucket.arn}/*",
+        aws_s3_bucket.lancedb_bucket.arn,
+        "${aws_s3_bucket.lancedb_bucket.arn}/*"
       ]
     }]
   })
@@ -164,4 +166,25 @@ resource "aws_iam_role_policy" "athena_access" {
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy" "invoke_bedrock_models" {
+  name = "DiscordBotInvokeBedrockModels"
+  role = aws_iam_role.lambda_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:ListModels",
+          "bedrock:GetModel",
+          "bedrock:ListModelVersions"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+  
 }

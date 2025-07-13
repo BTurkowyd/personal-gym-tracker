@@ -42,6 +42,16 @@ variable "fetch_all_workouts_repo_name" {
   description = "The name of the ECR repository"
 }
 
+# Name of the ECR repository for the Get Glue table schema Lambda image.
+variable "get_table_schema_repo_name" {
+  description = "The name of the ECR repository"
+}
+
+# Name of the ECR repository for the Execute Athena Query Lambda image.
+variable "execute_athena_query_repo_name" {
+  description = "The name of the ECR repository"
+}
+
 variable "athena_database_name" {
   description = "The name of the Athena database for workouts"
   type        = string
@@ -49,5 +59,10 @@ variable "athena_database_name" {
 
 variable "athena_queries_bucket" {
   description = "The S3 bucket location for Athena query results"
+  type        = string
+}
+
+variable "lance_db_bucket_name" {
+  description = "The S3 bucket name for LanceDB storage"
   type        = string
 }
