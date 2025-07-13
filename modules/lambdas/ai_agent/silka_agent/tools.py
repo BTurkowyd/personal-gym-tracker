@@ -4,7 +4,6 @@ from .lambda_client import invoke_lambda
 import json
 from .config import region, model_name, model_kwargs
 from langchain_aws import ChatBedrock
-from .lance_db import add_successful_query_to_lancedb
 
 _tool_cache = {}
 
