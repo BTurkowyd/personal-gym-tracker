@@ -8,45 +8,70 @@ from diagrams.onprem.database import PostgreSQL
 from diagrams.aws.storage import S3
 from diagrams.aws.database import Dynamodb
 from diagrams.aws.analytics import Glue, Athena
+from diagrams.aws.ml import Bedrock
 
 graph_attr = {
-    "bgcolor": "transparent",    # Set background color to transparent
-    "style": "dotted, bold"
+    "bgcolor": "transparent",  # Set background color to transparent
+    "style": "dotted, bold",
 }
 
 with Diagram("Infrastructure", show=False):
-    hevy_server = PostgreSQL('Hevy Backend DB')
-    superset = Superset('Superset')
-    api_gateway = APIGateway('Bot endpoint')
+    hevy_server = PostgreSQL("Hevy Backend DB")
+    api_gateway = APIGateway("Bot endpoint")
+    user_script = Client("Local prompt")
 
-    with Cluster("AWS Account", direction='LR', graph_attr=graph_attr):
-        bot = Lambda('Discord bot')
+    with Cluster("AWS ACCOUNT", direction="LR", graph_attr=graph_attr):
+        bot = Lambda("Discord bot")
         sns = SNS("SNS")
-        glue = Glue('Workout database')
-        athena = Athena('Workout SQL executor')
 
-        with Cluster('API calls'):
-            fetch_all = Lambda('Fetch all workouts')
-            hevy_api_caller = Lambda('Hevy API caller')
+        with Cluster("HEVY API CALLS"):
+            fetch_all = Lambda("Backfill all workouts")
+            hevy_api_caller = Lambda("API caller")
 
-        with Cluster('Storage'):
-            s3 = S3('Workouts file storage')
-            dynamodb = Dynamodb('Workouts table')
+        with Cluster("STORAGE & METADATA"):
+            s3 = S3("Workouts file storage")
+            dynamodb = Dynamodb("Workouts metadata")
 
-        bot >> sns >> [fetch_all, hevy_api_caller]
-        fetch_all >> Edge(color='#00AA33') >> s3
-        fetch_all >> Edge(color='#0033FF') >> dynamodb
-        hevy_api_caller >> Edge(color='#00AA33') >> s3
-        hevy_api_caller >> Edge(color='#0033FF') >> dynamodb
-        s3 >> glue >> athena
+        with Cluster("DATA"):
+            glue = Glue("Workout database")
+            athena = Athena("Workout SQL executor")
 
-    api_gateway >> bot
-    bot >> api_gateway
-    [fetch_all, hevy_api_caller] >> Edge(style='dotted, bold') >> hevy_server
-    hevy_server >> Edge(style='dotted, bold') >> [fetch_all, hevy_api_caller]
+        with Cluster("AI AGENT"):
+            get_table_schema = Lambda("Get Table Schema")
+            execute_query = Lambda("Execute Query")
+            bedrock = Bedrock("Bedrock Claude Model")
+
+        # Connections inside AWS Account
+        bot >> sns
+        sns >> fetch_all
+        sns >> hevy_api_caller
+        fetch_all >> Edge(color="#00AA33") >> s3
+        fetch_all >> Edge(color="#0033FF") >> dynamodb
+        hevy_api_caller >> Edge(color="#00AA33") >> s3
+        hevy_api_caller >> Edge(color="#0033FF") >> dynamodb
+        s3 >> glue
+        glue >> athena
+        # AI Agent connections
+        get_table_schema >> glue
+        glue >> get_table_schema  # return arrow
+        execute_query >> athena
+        athena >> execute_query  # return arrow
+    # Connections outside AWS Account
+
+    superset = Superset("Superset")
+
+    user_script >> bedrock
+    bedrock >> user_script  # return arrow
+    bedrock >> get_table_schema
+    get_table_schema >> bedrock  # return arrow
+    bedrock >> execute_query
+    execute_query >> bedrock  # return arrow
+    fetch_all >> Edge(style="dotted, bold") >> hevy_server
+    hevy_api_caller >> Edge(style="dotted, bold") >> hevy_server
+    hevy_server >> Edge(style="dotted, bold") >> fetch_all
+    hevy_server >> Edge(style="dotted, bold") >> hevy_api_caller
     athena >> superset
     superset >> athena
-
-
-
-
+    # Bidirectional connection between API Gateway and Discord bot
+    api_gateway >> bot
+    bot >> api_gateway

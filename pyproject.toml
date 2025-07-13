@@ -9,6 +9,7 @@ dependencies = [
     "certifi==2024.2.2",
     "cffi==1.17.1",
     "charset-normalizer==3.3.2",
+    "diagrams>=0.24.4",
     "distlib==0.3.8",
     "filelock==3.14.0",
     "idna==3.7",
