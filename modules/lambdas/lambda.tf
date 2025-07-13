@@ -68,25 +68,20 @@ resource "aws_lambda_function" "get_table_schema" {
   }
 }
 
-data "archive_file" "execute_query" {
-  type        = "zip"
-  source_file = "${path.module}/execute_query/execute_query.py"
-  output_path = "${path.module}/execute_query/execute_query.zip"
-}
 
 # Lambda function for executing Athena queries.
-resource "aws_lambda_function" "execute_query" {
+resource "aws_lambda_function" "execute_athena_query" {
   function_name = "ExecuteAthenaQuery"
   role          = var.lambda_role_arn
-  handler       = "execute_query.lambda_handler"
-  runtime       = "python3.11"
-  timeout       = 60
-  filename      = data.archive_file.execute_query.output_path
-  source_code_hash = data.archive_file.execute_query.output_base64sha256
+  package_type  = "Image"
+  image_uri     = "${data.aws_ecr_repository.execute_athena_query_repo.repository_url}:latest"
+  timeout       = 120
+  source_code_hash = split(":", data.aws_ecr_image.execute_athena_query_latest_image.id)[1]
   environment {
     variables = {
       ATHENA_DATABASE = var.athena_database_name
       ATHENA_OUTPUT   = "s3://${var.athena_queries_bucket}/"
+      LANCE_DB_BUCKET = var.lance_db_bucket_name
     }
   }
 }

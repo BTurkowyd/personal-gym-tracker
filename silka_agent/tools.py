@@ -1,3 +1,4 @@
+import os
 from langchain_core.tools import tool
 from .lambda_client import invoke_lambda
 import json
@@ -64,8 +65,9 @@ def get_glue_table_schema(input: str) -> str:
 def execute_athena_query(input: str) -> str:
     """Execute a SQL query on AWS Athena and return the results as a formatted string."""
 
-    # ...existing validation logic...
     payload = {"query": input}
+    payload["user_prompt"] = os.getenv("PROMPT", "")
+
     response = invoke_lambda(
         "ExecuteAthenaQuery",
         json.dumps(payload).encode("utf-8"),
@@ -100,31 +102,10 @@ def execute_athena_query(input: str) -> str:
     rows = body["rows"]
     # If only header or no data rows, return a clear marker
     if len(rows) <= 1:
-        # here will be the logic to insert the query into LanceDB
-        sql_query = input
-        returned_rows = len(rows) - 1  # Exclude header row
-
-        add_successful_query_to_lancedb(
-            sql_query,
-            returned_rows,
-            region=region,
-        )
-
         return "NO_DATA: Athena query returned no results.\n" f"FULL QUERY:\n{input}\n"
     formatted_rows = "\n".join(", ".join(row) for row in rows[1:])
     header = ", ".join(rows[0])
     data_block = f"---BEGIN DATA---\n{header}\n{formatted_rows}\n---END DATA---"
-
-    # here will be the logic to insert the query into LanceDB
-    sql_query = input
-    returned_rows = len(rows) - 1  # Exclude header row
-
-    add_successful_query_to_lancedb(
-        sql_query,
-        returned_rows,
-        region=region,
-    )
-
     return (
         "\n==================== ATHENA QUERY RESULT ====================\n"
         "CRITICAL: COPY THE DATA BELOW INTO YOUR FINAL ANSWER!\n"

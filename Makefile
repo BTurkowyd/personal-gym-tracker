@@ -39,6 +39,13 @@ push-get-table-schema:
 	cd ../../environments/$(STAGE) && \
 	terragrunt apply
 
+# Build and push only the execute_athena_query Lambda image, then apply Terraform.
+push-execute-athena-query:
+	cd modules/lambdas && \
+	packer build -var 'lambda_name=execute_athena_query' -var 'ecr_repo_name=execute-athena-query' ./packer_docker_template.pkr.hcl && \
+	cd ../../environments/$(STAGE) && \
+	terragrunt apply
+
 # Only apply Terraform (no Docker builds).
 apply:
 	cd environments/$(STAGE) && \
