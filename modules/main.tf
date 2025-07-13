@@ -11,6 +11,7 @@ module "lambdas" {
   fetch_all_workouts_repo_name = aws_ecr_repository.fetch_all_workouts.name
   get_table_schema_repo_name = aws_ecr_repository.get_table_schema.name
   execute_athena_query_repo_name = aws_ecr_repository.execute_athena_query.name
+  ai_agent_repo_name = aws_ecr_repository.ai_agent.name
   athena_database_name = module.athena.athena_database_name
   athena_queries_bucket = module.athena.athena_queries_bucket
   lance_db_bucket_name = aws_s3_bucket.lancedb_bucket.bucket

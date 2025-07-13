@@ -46,6 +46,13 @@ push-execute-athena-query:
 	cd ../../environments/$(STAGE) && \
 	terragrunt apply
 
+# Build and push only the ai_agent Lambda image, then apply Terraform.
+push-ai-agent:
+	cd modules/lambdas && \
+	packer build -var 'lambda_name=ai_agent' -var 'ecr_repo_name=ai-agent' ./packer_docker_template.pkr.hcl && \
+	cd ../../environments/$(STAGE) && \
+	terragrunt apply
+
 # Only apply Terraform (no Docker builds).
 apply:
 	cd environments/$(STAGE) && \

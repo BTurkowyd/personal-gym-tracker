@@ -8,8 +8,7 @@ def lambda_handler(event, context):
     AWS Lambda handler for executing the agent workflow.
     This function is triggered by an event, such as an API Gateway request.
     """
-    body = json.loads(event["body"])
-    query = body.get("query", "Default query if not set")
+    query = event.get("query", "")
     print(f"Received query: {query}")
 
     response = run_agent(query)
@@ -23,4 +22,4 @@ def lambda_handler(event, context):
 if __name__ == "__main__":
     query = "in total how many cable crunch reps i did in 2023?"
 
-    lambda_handler({"body": json.dumps({"query": query})}, None)
+    lambda_handler({"query": query}, None)
