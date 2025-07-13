@@ -65,26 +65,18 @@ resource "aws_iam_role_policy" "dynamodb_access" {
 # Policy for Lambda to access SSM Parameter Store for workout index.
 resource "aws_iam_role_policy" "ssm_parameter_access" {
   name = "DiscordBotSSMAccess"
-  role = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ssm:GetParameter",
-          "ssm:GetParameters",
-          "ssm:GetParametersByPath",
-          "ssm:PutParameter"
-        ]
-        Resource = [
-          "arn:aws:ssm:eu-central-1:${data.aws_caller_identity.current.account_id}:parameter/discord/*",
-          "arn:aws:ssm:eu-central-1:${data.aws_caller_identity.current.account_id}:parameter/hevy/*",
-          "arn:aws:ssm:eu-central-1:${data.aws_caller_identity.current.account_id}:parameter/silka/*"
-        ]
-      }
-    ]
+    Statement = [{
+      Effect   = "Allow"
+      Action   = [
+        "ssm:GetParameter",
+        "ssm:PutParameter",
+      ]
+      Resource = "*"
+    }]
   })
+  role   = aws_iam_role.lambda_role.id
 }
 
 # Attach AWS managed policy for Lambda VPC access.
