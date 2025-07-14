@@ -64,12 +64,7 @@ def run_agent(query: str):
                                 hasattr(latest_msg, "additional_kwargs")
                                 and "tool_calls" in latest_msg.additional_kwargs
                             ):
-                                content_preview = (
-                                    msg_content[:150] + "..."
-                                    if len(msg_content) > 150
-                                    else msg_content
-                                )
-                                print(f"   💬 Message content: {content_preview}")
+                                print(f"   💬 Message content: {msg_content}")
         print("\n" + "=" * 80)
         print("✅ AGENT EXECUTION COMPLETED")
         print("=" * 80)

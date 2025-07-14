@@ -52,6 +52,11 @@ variable "execute_athena_query_repo_name" {
   description = "The name of the ECR repository"
 }
 
+# Name of the ECR repository for the AI Agent Lambda image.
+variable "ai_agent_repo_name" {
+  description = "The name of the ECR repository"
+}
+
 variable "athena_database_name" {
   description = "The name of the Athena database for workouts"
   type        = string

@@ -68,7 +68,6 @@ resource "aws_lambda_function" "get_table_schema" {
   }
 }
 
-
 # Lambda function for executing Athena queries.
 resource "aws_lambda_function" "execute_athena_query" {
   function_name = "ExecuteAthenaQuery"
@@ -82,6 +81,22 @@ resource "aws_lambda_function" "execute_athena_query" {
       ATHENA_DATABASE = var.athena_database_name
       ATHENA_OUTPUT   = "s3://${var.athena_queries_bucket}/"
       LANCE_DB_BUCKET = var.lance_db_bucket_name
+    }
+  }
+}
+
+# Lambda function for AI Agent execution.
+resource "aws_lambda_function" "ai_agent" {
+  function_name = "AIAgent"
+  role          = var.lambda_role_arn
+  package_type  = "Image"
+  image_uri     = "${data.aws_ecr_repository.ai_agent_repo.repository_url}:latest"
+  timeout       = 120
+  source_code_hash = split(":", data.aws_ecr_image.ai_agent_latest_image.id)[1]
+
+  environment {
+    variables = {
+      DISCORD_WEBHOOK_URL = var.local_envs["DISCORD_WEBHOOK"]
     }
   }
 }

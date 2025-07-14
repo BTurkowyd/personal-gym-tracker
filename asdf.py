@@ -6,7 +6,7 @@ import lancedb
 import boto3
 from dotenv import load_dotenv
 
-from silka_agent.lance_db import titan_embed
+from modules.lambdas.ai_agent.silka_agent.lance_db import titan_embed
 
 load_dotenv(".env")
 
@@ -70,9 +70,7 @@ def retrieve_relevant_chunks(user_query: str, k: int = 3) -> list[dict]:
 
 if __name__ == "__main__":
     # Example usage
-    user_query = (
-        "return the five first workouts. Return the days and exercises in each workout."
-    )
+    user_query = "in total how many cable crunch reps i did in 2024?"
     relevant_chunks = retrieve_relevant_chunks(user_query, k=5)
     print("Relevant chunks retrieved:")
     for chunk in relevant_chunks:

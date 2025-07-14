@@ -28,6 +28,12 @@ resource "aws_ecr_repository" "execute_athena_query" {
   force_delete = true
 }
 
+# ECR repository for AI Agent Lambda Docker image.
+resource "aws_ecr_repository" "ai_agent" {
+  name = "ai-agent"
+  force_delete = true
+}
+
 # Lifecycle policy for Discord bot ECR repository.
 resource "aws_ecr_lifecycle_policy" "discord_bot" {
   policy     = jsonencode(local.lifecycle_policy)
@@ -56,6 +62,12 @@ resource "aws_ecr_lifecycle_policy" "get_table_schema" {
 resource "aws_ecr_lifecycle_policy" "execute_athena_query" {
   policy     = jsonencode(local.lifecycle_policy)
   repository = aws_ecr_repository.execute_athena_query.name
+}
+
+# Lifecycle policy for AI Agent ECR repository.
+resource "aws_ecr_lifecycle_policy" "ai_agent" {
+  policy     = jsonencode(local.lifecycle_policy)
+  repository = aws_ecr_repository.ai_agent.name
 }
 
 # Local variable defining ECR lifecycle policy to delete untagged images older than 1 day.

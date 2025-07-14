@@ -4,9 +4,14 @@ from .lambda_client import invoke_lambda
 import json
 from .config import region, model_name, model_kwargs
 from langchain_aws import ChatBedrock
-from .lance_db import add_successful_query_to_lancedb
+from pydantic import BaseModel
 
 _tool_cache = {}
+
+
+class AthenaQueryInput(BaseModel):
+    input: str  # the SQL query
+    user_prompt: str  # the prompt you want to pass along
 
 
 @tool
@@ -62,11 +67,16 @@ def get_glue_table_schema(input: str) -> str:
 
 
 @tool
-def execute_athena_query(input: str) -> str:
-    """Execute a SQL query on AWS Athena and return the results as a formatted string."""
+def execute_athena_query(input_data: AthenaQueryInput) -> str:
+    """Execute a SQL query on AWS Athena.
 
-    payload = {"query": input}
-    payload["user_prompt"] = os.getenv("PROMPT", "")
+    Requires both the SQL query string (`input`) and the natural language user prompt (`user_prompt`) that led to the query.
+    """
+
+    payload = {
+        "query": input_data.input,
+        "user_prompt": input_data.user_prompt,
+    }
 
     response = invoke_lambda(
         "ExecuteAthenaQuery",
@@ -87,7 +97,7 @@ def execute_athena_query(input: str) -> str:
         return (
             "\n==================== ATHENA QUERY ERROR ====================\n"
             f"ERROR: Lambda returned statusCode {status}.\n"
-            f"FULL QUERY:\n{input}\n"
+            f"FULL QUERY:\n{input_data}\n"
             f"ERROR CONTENT:\n{error_msg}\n"
             "==========================================================\n"
         )
@@ -95,14 +105,17 @@ def execute_athena_query(input: str) -> str:
         return (
             "\n==================== ATHENA QUERY ERROR ====================\n"
             "ERROR: Athena query failed or returned no rows.\n"
-            f"FULL QUERY:\n{input}\n"
+            f"FULL QUERY:\n{input_data}\n"
             f"ERROR CONTENT:\n{json.dumps(body, indent=2) if isinstance(body, dict) else body}\n"
             "==========================================================\n"
         )
     rows = body["rows"]
     # If only header or no data rows, return a clear marker
     if len(rows) <= 1:
-        return "NO_DATA: Athena query returned no results.\n" f"FULL QUERY:\n{input}\n"
+        return (
+            "NO_DATA: Athena query returned no results.\n"
+            f"FULL QUERY:\n{input_data}\n"
+        )
     formatted_rows = "\n".join(", ".join(row) for row in rows[1:])
     header = ", ".join(rows[0])
     data_block = f"---BEGIN DATA---\n{header}\n{formatted_rows}\n---END DATA---"
@@ -110,7 +123,7 @@ def execute_athena_query(input: str) -> str:
         "\n==================== ATHENA QUERY RESULT ====================\n"
         "CRITICAL: COPY THE DATA BELOW INTO YOUR FINAL ANSWER!\n"
         "RESULTS FOR QUERY (FULL QUERY SHOWN):\n"
-        f"{input}\n\n{data_block}\n"
+        f"{input_data}\n\n{data_block}\n"
         "INSTRUCTION: You MUST include the actual data rows above in your response to the user.\n"
         "Do NOT just describe what the query does - show the real data!\n"
         "===========================================================\n"
@@ -120,4 +133,4 @@ def execute_athena_query(input: str) -> str:
 tools = [get_glue_table_schema, execute_athena_query]
 
 llm = ChatBedrock(model=model_name, region=region, model_kwargs=model_kwargs)
-llm_with_tools = llm.bind_tools([get_glue_table_schema, execute_athena_query])
+llm_with_tools = llm.bind_tools(tools)

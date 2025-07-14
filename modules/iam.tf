@@ -180,3 +180,21 @@ resource "aws_iam_role_policy" "invoke_bedrock_models" {
   })
   
 }
+
+resource "aws_iam_role_policy" "ai_agent_invoke_lambdas" {
+  name = "AIAgentInvokeLambdas"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = ["*"]
+      }
+    ]
+  })
+}
