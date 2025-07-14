@@ -80,15 +80,18 @@ def lambda_handler(event, context):
         if totp.verify(*otp):
             command = body["data"]["name"]
 
-            if command != "print_workout":
+            if command in ["bleb", "fetch_workouts", "print_latest_workout"]:
                 # Publish generic command to SNS
                 message = {"command": command}
-                publish_to_sns(message, SNS_TOPIC_ARN)
-            else:
+            elif command == "print_workout":
                 # Publish print_workout command with date to SNS
                 date = [o["value"] for o in options if o["name"] == "date"]
                 message = {"command": command, "date": date[0]}
-                publish_to_sns(message, SNS_TOPIC_ARN)
+            elif command == "ask":
+                # Publish ask command with prompt to SNS
+                prompt = [o["value"] for o in options if o["name"] == "prompt"]
+                message = {"command": command, "prompt": prompt[0]}
+            publish_to_sns(message, SNS_TOPIC_ARN)
         return COMMAND_ACCEPTED
     else:
         # Unhandled interaction type

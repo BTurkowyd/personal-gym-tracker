@@ -64,7 +64,7 @@ def command_handler(message: str):
     elif command == "print_workout":
         date = message["date"]
         print_workout(date)
-    elif command == "ask_ai_agent":
+    elif command == "ask":
         ask_ai_agent(message["prompt"])
     else:
         print("no bleb")
@@ -181,9 +181,18 @@ def print_workout(date: str) -> None:
 
 
 def ask_ai_agent(prompt: str) -> None:
-    raise NotImplementedError(
-        "The AI Agent functionality is not implemented yet. Please implement the ask_ai_agent function."
+    lambda_client = boto3.client("lambda")
+    payload = {"prompt": prompt}
+    response = lambda_client.invoke(
+        FunctionName="AIAgent",
+        InvocationType="RequestResponse",
+        Payload=json.dumps(payload),
     )
+
+    if response["StatusCode"] == 200:
+        print("AI Agent response:", response["Payload"].read())
+    else:
+        print("Error invoking AI Agent:", response)
 
 
 def upload_file_to_s3(file_path, bucket_name, body):

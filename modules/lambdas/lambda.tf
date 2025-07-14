@@ -93,6 +93,12 @@ resource "aws_lambda_function" "ai_agent" {
   image_uri     = "${data.aws_ecr_repository.ai_agent_repo.repository_url}:latest"
   timeout       = 120
   source_code_hash = split(":", data.aws_ecr_image.ai_agent_latest_image.id)[1]
+
+  environment {
+    variables = {
+      DISCORD_WEBHOOK_URL = var.local_envs["DISCORD_WEBHOOK"]
+    }
+  }
 }
 
 # Allow SNS to invoke the Hevy API caller Lambda function.
