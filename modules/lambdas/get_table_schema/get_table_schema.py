@@ -83,7 +83,7 @@ def lambda_handler(event, context):
             ],
         }
 
-    prompt = event.get("prompt", "how many workouts in total are recorded?")
+    prompt = event.get("prompt")
     schemas["relevant_chunks"] = retrieve_relevant_chunks(prompt, k=5)
     return {"statusCode": 200, "body": schemas}
 

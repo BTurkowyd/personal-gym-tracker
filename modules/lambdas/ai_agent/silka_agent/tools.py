@@ -9,20 +9,21 @@ from pydantic import BaseModel
 _tool_cache = {}
 
 
-class AthenaQueryInput(BaseModel):
+class ToolInput(BaseModel):
     input: str  # the SQL query
     user_prompt: str  # the prompt you want to pass along
 
 
 @tool
-def get_glue_table_schema(input: str) -> str:
-    """Return schemas for workouts, exercises, and sets tables: table name, column names, types, and comments."""
+def get_glue_table_schema(input: ToolInput) -> str:
+    """Accepts the user's entire prompt as input (input.input) and user's prompt (input.user_prompt) to get relevant chunks."""
     cache_key = "glue_schema"
     if cache_key in _tool_cache:
         return _tool_cache[cache_key]
 
     # Pass the user input as prompt to get relevant chunks
-    payload = {"prompt": input}
+    payload = {"prompt": input.user_prompt}
+    print("Sending payload to GetGlueTableSchema:", payload)
     response = invoke_lambda("GetGlueTableSchema", json.dumps(payload).encode("utf-8"))
     body = response.get("body") or json.loads(response["body"])
     if isinstance(body, str):
@@ -67,7 +68,7 @@ def get_glue_table_schema(input: str) -> str:
 
 
 @tool
-def execute_athena_query(input_data: AthenaQueryInput) -> str:
+def execute_athena_query(input_data: ToolInput) -> str:
     """Execute a SQL query on AWS Athena.
 
     Requires both the SQL query string (`input`) and the natural language user prompt (`user_prompt`) that led to the query.

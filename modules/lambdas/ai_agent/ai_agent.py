@@ -40,6 +40,6 @@ def lambda_handler(event, context):
 
 
 if __name__ == "__main__":
-    query = "in total how many cable crunch reps i did in 2023?"
+    prompt = "on what day i had the largest volume in a single set of squats with barbell? return the date, weight and reps from that set."
 
-    lambda_handler({"query": query}, None)
+    lambda_handler({"prompt": prompt}, None)
