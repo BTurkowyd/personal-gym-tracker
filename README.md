@@ -40,6 +40,7 @@ The infrastructure is designed to ingest workout data from the Hevy API, store i
   - `discord_bot`: Handles Discord interactions.
   - `hevy_api_caller`: Fetches and processes workout data from Hevy API.
   - `fetch_all_workouts`: Bulk fetches all workouts from Hevy.
+  - `ai-agent`: An AI Agent accepting natural language questions about the data.
   - `get_table_schema`: Returns Glue/Athena table schemas for the AI Agent.
   - `execute_query`: Executes SQL queries on Athena for the AI Agent.
 - **SNS**: Used for decoupling bot commands and data processing.
@@ -50,8 +51,8 @@ The infrastructure is designed to ingest workout data from the Hevy API, store i
 - **Superset**: Analytics UI, deployed on EC2 or locally via Docker, connected to Athena for advanced analytics and visualization.
 
 **Workflow Overview:**
-- Users interact via Discord or a local script.
-- The Discord bot and API Gateway handle incoming requests.
+- The Discord bot and API Gateway handle incoming requests, via set of defined in `side-scripts/discord_bot/bot_commands.py`.
+- The user has to provide a one time password (OTP) with each request.
 - For analytics queries, the local script calls Bedrock Claude (AI Agent), which orchestrates calls to `get_table_schema` and `execute_query` Lambdas.
 - The AI Agent uses Glue and Athena to access and query workout data, returning results to the user.
 - Superset provides a UI for direct analytics and visualization on top of Athena.
@@ -147,7 +148,7 @@ All Lambda functions are packaged as Docker images and pushed to AWS ECR using P
     make push-all
     ```
     This will:
-    - Build all Lambda Docker images (`fetch_all_workouts`, `discord_bot`, `hevy_api_caller`, `get_table_schema`)
+    - Build all Lambda Docker images (`fetch_all_workouts`, `discord_bot`, `hevy_api_caller`, `get_table_schema`, `execute_athena_query`, `ai_agent`)
     - Push them to ECR
     - Apply Terraform via Terragrunt for the selected stage (`dev` by default)
 
@@ -158,6 +159,8 @@ All Lambda functions are packaged as Docker images and pushed to AWS ECR using P
     make push-discord-bot
     make push-hevy-api-caller
     make push-get-table-schema
+    make push-execute-athena-query
+    make push-ai-agent
     ```
 
 - **Apply infrastructure only (no Docker builds):**
