@@ -1,3 +1,5 @@
+terraform_binary = "tofu"
+
 locals {
   region = "eu-central-1"
   bucket = "terraform-states-6mabw3s4smjiozsqyi76rq"
@@ -10,11 +12,11 @@ generate "versions" {
   if_exists = "overwrite_terragrunt"
   contents = <<-EOT
     terraform {
-      required_version = "1.6.1"
+      required_version = "1.9.0"
       required_providers {
         aws = {
           source = "hashicorp/aws"
-          version = ">= 5.39.0"
+          version = ">= 6.0.0"
         }
       }
     }

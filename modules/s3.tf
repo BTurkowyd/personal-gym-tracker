@@ -7,3 +7,8 @@ resource "aws_s3_bucket" "upload_bucket" {
 resource "random_id" "bucket_suffix" {
   byte_length = 16
 }
+
+# LanceDB bucket for storing successfully executed queries.
+resource "aws_s3_bucket" "lancedb_bucket" {
+  bucket = "lancedb-workouts-tracker-${lower(random_id.bucket_suffix.b64_url)}"
+}

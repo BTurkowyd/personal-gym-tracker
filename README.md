@@ -23,7 +23,6 @@ This repository contains the complete infrastructure-as-code and supporting scri
   - [Modules Overview](#modules-overview)
   - [Security Notes](#security-notes)
   - [Troubleshooting](#troubleshooting)
-  - [License](#license)
   - [Contact](#contact)
 
 ---
@@ -32,19 +31,31 @@ This repository contains the complete infrastructure-as-code and supporting scri
 
 ![Silka Architecture Diagram](./side-scripts/infrastructure-diagram/infrastructure.png)
 
-The infrastructure is designed to ingest workout data from the Hevy API, store it in AWS (S3, DynamoDB), and make it queryable via Athena and Glue. A Discord bot provides an interface for users to interact with the system. Superset is used for analytics and visualization.
+
+The infrastructure is designed to ingest workout data from the Hevy API, store it in AWS (S3, DynamoDB), and make it queryable via Athena and Glue. A Discord bot provides an interface for users to interact with the system. Superset is used for analytics and visualization. An AI Agent (powered by AWS Bedrock Claude) enables advanced querying and context-aware analytics.
 
 **Main AWS Components:**
 - **API Gateway**: Exposes endpoints for the Discord bot.
-- **Lambda Functions**: 
+- **Lambda Functions**:
   - `discord_bot`: Handles Discord interactions.
-  - `hevy_api_caller`: Fetches and processes workout data.
+  - `hevy_api_caller`: Fetches and processes workout data from Hevy API.
   - `fetch_all_workouts`: Bulk fetches all workouts from Hevy.
+  - `ai-agent`: An AI Agent accepting natural language questions about the data.
+  - `get_table_schema`: Returns Glue/Athena table schemas for the AI Agent.
+  - `execute_query`: Executes SQL queries on Athena for the AI Agent.
 - **SNS**: Used for decoupling bot commands and data processing.
 - **S3**: Stores raw and processed workout data.
 - **DynamoDB**: Metadata and indexing for workouts.
-- **Athena & Glue**: Query and catalog workout data.
-- **Superset**: Analytics UI, deployed on EC2 or locally via Docker.
+- **Athena & Glue**: Query and catalog workout data (grouped as the Data layer).
+- **AI Agent (Bedrock Claude)**: Receives user prompts (from a local script or Discord), retrieves schema and context from `get_table_schema`, executes queries via `execute_query`, and returns results to the user. It stores successfully executed queries in the vectorized database (LanceDB) to improve the future queries syntax quality.
+- **Superset**: Analytics UI, deployed on EC2 or locally via Docker, connected to Athena for advanced analytics and visualization.
+
+**Workflow Overview:**
+- The Discord bot and API Gateway handle incoming requests, via set of defined in `side-scripts/discord_bot/bot_commands.py`.
+- The user has to provide a one time password (OTP) with each request.
+- For analytics queries, the local script calls Bedrock Claude (AI Agent), which orchestrates calls to `get_table_schema` and `execute_query` Lambdas.
+- The AI Agent uses Glue and Athena to access and query workout data, returning results to the user.
+- Superset provides a UI for direct analytics and visualization on top of Athena.
 
 ---
 
@@ -137,20 +148,29 @@ All Lambda functions are packaged as Docker images and pushed to AWS ECR using P
     make push-all
     ```
     This will:
-    - Build all Lambda Docker images (`fetch_all_workouts`, `discord_bot`, `hevy_api_caller`)
+    - Build all Lambda Docker images (`fetch_all_workouts`, `discord_bot`, `hevy_api_caller`, `get_table_schema`, `execute_athena_query`, `ai_agent`)
     - Push them to ECR
     - Apply Terraform via Terragrunt for the selected stage (`dev` by default)
+
 
 - **Deploy a single Lambda image:**
     ```sh
     make push-fetch-all-workouts
     make push-discord-bot
     make push-hevy-api-caller
+    make push-get-table-schema
+    make push-execute-athena-query
+    make push-ai-agent
     ```
 
 - **Apply infrastructure only (no Docker builds):**
     ```sh
     make apply
+    ```
+
+- **Set up the LanceDB in the S3 Bucket**
+    ```sh
+    make init-lancedb
     ```
 
 ### 2. Terragrunt Environments
@@ -190,7 +210,7 @@ docker-compose up
 ## Security Notes
 
 - **Sensitive values** (tokens, secrets, keys) are loaded from `.env` files and not stored in the repository.
-- **IAM policies** are scoped to only necessary resources (Athena, S3, Glue, DynamoDB).
+- **IAM policies** are scoped to only necessary resources (Athena, S3, Glue, DynamoDB, Bedrock).
 - **SNS topic policy** is open for demonstration; restrict in production.
 - **Superset IAM user credentials** are output as sensitive values.
 
@@ -202,12 +222,6 @@ docker-compose up
 - **Terraform/AWS errors:** Check AWS credentials and permissions.
 - **Superset connection issues:** Verify `.env` values and that all containers are running.
 - **Discord bot not responding:** Check Lambda logs in AWS Console and ensure API Gateway is deployed.
-
----
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 

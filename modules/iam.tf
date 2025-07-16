@@ -26,11 +26,14 @@ resource "aws_iam_role_policy" "s3_access" {
       Effect   = "Allow"
       Action   = [
         "s3:PutObject",
-        "s3:GetObject"
+        "s3:GetObject",
+        "s3:ListBucket",
       ]
       Resource = [
         aws_s3_bucket.upload_bucket.arn,
-        "${aws_s3_bucket.upload_bucket.arn}/*"
+        "${aws_s3_bucket.upload_bucket.arn}/*",
+        aws_s3_bucket.lancedb_bucket.arn,
+        "${aws_s3_bucket.lancedb_bucket.arn}/*"
       ]
     }]
   })
@@ -80,4 +83,118 @@ resource "aws_iam_role_policy" "ssm_parameter_access" {
 resource "aws_iam_role_policy_attachment" "lambda_vpc_access" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
   role       = aws_iam_role.lambda_role.id
+}
+
+# Policy for Lambda to access AWS Glue GetTable (needed for get_table_schema Lambda)
+resource "aws_iam_role_policy" "glue_get_table_access" {
+  name = "DiscordBotGlueGetTableAccess"
+  role = aws_iam_role.lambda_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "glue:GetTable",
+          "glue:GetTables",
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:GetTableVersion",
+          "glue:GetTableVersions"
+        ]
+        Resource = [
+          "arn:aws:glue:eu-central-1:${data.aws_caller_identity.current.account_id}:catalog",
+          "arn:aws:glue:eu-central-1:${data.aws_caller_identity.current.account_id}:database/*",
+          "arn:aws:glue:eu-central-1:${data.aws_caller_identity.current.account_id}:table/*/*"
+        ]
+      }
+    ]
+  })
+}
+
+# Policy for Lambda to execute Athena queries and get results
+resource "aws_iam_role_policy" "athena_access" {
+  name = "DiscordBotAthenaAccess"
+  role = aws_iam_role.lambda_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "athena:StartQueryExecution",
+          "athena:GetQueryExecution",
+          "athena:GetQueryResults",
+          "athena:StopQueryExecution",
+          "athena:GetWorkGroup",
+          "athena:GetDatabase",
+          "athena:GetTableMetadata",
+          "athena:ListWorkGroups",
+          "athena:ListDatabases",
+          "athena:ListTableMetadata",
+          "athena:GetDataCatalog",
+          "athena:ListDataCatalogs"
+        ],
+        Resource = [
+          "arn:aws:athena:eu-central-1:${data.aws_caller_identity.current.account_id}:workgroup/*",
+          "arn:aws:athena:eu-central-1:${data.aws_caller_identity.current.account_id}:datacatalog/*",
+          "arn:aws:athena:eu-central-1:${data.aws_caller_identity.current.account_id}:database/*",
+          "arn:aws:athena:eu-central-1:${data.aws_caller_identity.current.account_id}:table/*/*"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:AbortMultipartUpload",
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ],
+        Resource = [
+          module.athena.athena_bucket_arn,
+          "${module.athena.athena_bucket_arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "invoke_bedrock_models" {
+  name = "DiscordBotInvokeBedrockModels"
+  role = aws_iam_role.lambda_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:ListModels",
+          "bedrock:GetModel",
+          "bedrock:ListModelVersions"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+  
+}
+
+resource "aws_iam_role_policy" "ai_agent_invoke_lambdas" {
+  name = "AIAgentInvokeLambdas"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = ["*"]
+      }
+    ]
+  })
 }
