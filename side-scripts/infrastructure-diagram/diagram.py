@@ -59,9 +59,7 @@ with Diagram("Infrastructure", show=False):
                 execute_query = Lambda("Execute Query")
 
         # AI Agent connections
-        get_table_schema >> glue
         glue >> get_table_schema  # return arrow
-        execute_query >> athena
         athena >> execute_query  # return arrow
         execute_query >> lancedb
         lancedb >> get_table_schema
@@ -77,7 +75,6 @@ with Diagram("Infrastructure", show=False):
     execute_query >> bedrock  # return arrow
     fetch_all >> Edge(style="dotted, bold") >> hevy_server
     hevy_api_caller >> Edge(style="dotted, bold") >> hevy_server
-    hevy_api_caller >> bedrock
     hevy_server >> Edge(style="dotted, bold") >> fetch_all
     hevy_server >> Edge(style="dotted, bold") >> hevy_api_caller
     athena >> superset
