@@ -9,7 +9,7 @@
 .terragrunt-cache/
 .terraform/
 .idea/
-
+.vscode/
 .env
 .DS_store
 *.pyc
