@@ -1,3 +1,8 @@
+graph_attr = {
+    "bgcolor": "transparent",  # Set background color to transparent
+    "style": "dotted, bold",
+}
+
 from diagrams import Diagram, Cluster, Edge
 from diagrams.aws.compute import Lambda
 from diagrams.aws.network import APIGateway
@@ -16,10 +21,13 @@ graph_attr = {
     "style": "dotted, bold",
 }
 
-with Diagram("Infrastructure", show=False):
+# ----------------------
+# 1. DATA FEEDING DIAGRAM
+# ----------------------
+with Diagram(
+    "Data Feeding Architecture", show=False, filename="data_feeding_architecture"
+):
     hevy_server = PostgreSQL("Hevy Backend DB")
-    api_gateway = APIGateway("Bot endpoint")
-    user_script = Client("Local prompt")
 
     with Cluster("AWS ACCOUNT", direction="LR", graph_attr=graph_attr):
         bot = Lambda("Discord bot")
@@ -37,7 +45,7 @@ with Diagram("Infrastructure", show=False):
             glue = Glue("Workout database")
             athena = Athena("Workout SQL executor")
 
-        # Connections inside AWS Account
+        # Data ingestion connections
         bot >> sns
         sns >> fetch_all
         sns >> hevy_api_caller
@@ -48,37 +56,58 @@ with Diagram("Infrastructure", show=False):
         s3 >> glue
         glue >> athena
 
+    # External ingestion connections
+    fetch_all >> Edge(style="dotted, bold") >> hevy_server
+    hevy_api_caller >> Edge(style="dotted, bold") >> hevy_server
+    hevy_server >> Edge(style="dotted, bold") >> fetch_all
+    hevy_server >> Edge(style="dotted, bold") >> hevy_api_caller
+
+# ----------------------
+# 2. DATA RETRIEVAL DIAGRAM
+# ----------------------
+with Diagram(
+    "Data Retrieval Architecture",
+    show=False,
+    filename="data_retrieval_architecture",
+    direction="TB",
+):
+    api_gateway = APIGateway("Bot endpoint")  # Now outside AWS account
+
+    with Cluster("AWS ACCOUNT", direction="LR", graph_attr=graph_attr):
+        bot = Lambda("Discord bot")
+
+        with Cluster("DATA"):
+            glue = Glue("Workout database")
+            athena = Athena("Workout SQL executor")
+
         with Cluster("AI AGENT", direction="LR"):
             with Cluster("LLM"):
                 bedrock = Bedrock("Bedrock Claude Model")
             with Cluster("LANCE DB"):
                 lancedb = Server("LanceDB Vector DB")
             with Cluster("AI AGENT TOOLS"):
-                # Define tools as Lambda functions
                 get_table_schema = Lambda("Get Table Schema")
                 execute_query = Lambda("Execute Query")
 
-        # AI Agent connections
-        glue >> get_table_schema  # return arrow
-        athena >> execute_query  # return arrow
-        execute_query >> lancedb
-        lancedb >> get_table_schema
-    # Connections outside AWS Account
+        # Retrieval connections
+        _ = glue >> get_table_schema
+        _ = athena >> execute_query
+        _ = execute_query >> lancedb
+        _ = lancedb >> get_table_schema
 
     superset = Superset("Superset")
 
-    user_script >> bedrock
-    bedrock >> user_script  # return arrow
-    bedrock >> get_table_schema
-    get_table_schema >> bedrock  # return arrow
-    bedrock >> execute_query
-    execute_query >> bedrock  # return arrow
-    fetch_all >> Edge(style="dotted, bold") >> hevy_server
-    hevy_api_caller >> Edge(style="dotted, bold") >> hevy_server
-    hevy_server >> Edge(style="dotted, bold") >> fetch_all
-    hevy_server >> Edge(style="dotted, bold") >> hevy_api_caller
-    athena >> superset
-    superset >> athena
-    # Bidirectional connection between API Gateway and Discord bot
-    api_gateway >> bot
-    bot >> api_gateway
+    # User and tool interactions
+    _ = bedrock >> get_table_schema
+    _ = get_table_schema >> bedrock
+    _ = bedrock >> execute_query
+    _ = execute_query >> bedrock
+    _ = athena >> superset
+    _ = superset >> athena
+
+    # API Gateway and Discord bot outside AWS
+    _ = api_gateway >> bot
+    _ = bot >> api_gateway
+
+    # Discord bot can call LLM (Bedrock)
+    _ = bot >> bedrock
