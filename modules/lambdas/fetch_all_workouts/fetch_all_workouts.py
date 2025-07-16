@@ -69,6 +69,8 @@ def normalize_workout_star_schema(workout):
     # Discard logic (same as in normalize_workout_to_sets)
     discard_workout = {
         "media",
+        "user_id",
+        "username",
         "comments",
         "short_id",
         "verified",
@@ -154,9 +156,7 @@ def enforce_types(df, table: str):
             "id": "string",
             "name": "string",
             "index": "Int64",
-            "user_id": "string",
             "end_time": "Int64",
-            "username": "string",
             "created_at": "string",
             "routine_id": "string",
             "start_time": "Int64",
@@ -169,7 +169,6 @@ def enforce_types(df, table: str):
             "id": "string",
             "title": "string",
             "index": "Int64",
-            "user_id": "string",
             "workout_id": "string",
             "created_at": "string",
             "updated_at": "string",

@@ -72,16 +72,6 @@ resource "aws_glue_catalog_table" "workouts_table" {
       comment = "Indicates if the workout was recorded on a Wear OS watch"
     }
     columns {
-      name = "user_id"
-      type = "string"
-      comment = "Unique identifier for the user"
-    }
-    columns {
-      name = "username"
-      type = "string"
-      comment = "Username of the user"
-    }
-    columns {
       name = "profile_image"
       type = "string"
       comment = "Profile image URL of the user"
@@ -176,19 +166,9 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
       comment = "Index of the workout"
     }
     columns {
-      name = "user_id"
-      type = "string"
-      comment = "Unique identifier for the user"
-    }
-    columns {
       name = "end_time"
       type = "bigint"
       comment = "End time of the workout. Can be used to determine when the workout ended"
-    }
-    columns {
-      name = "username"
-      type = "string"
-      comment = "Name of the user"
     }
     columns {
       name = "created_at"
@@ -257,11 +237,6 @@ resource "aws_glue_catalog_table" "exercises_table_parquet" {
       name = "index"
       type = "bigint"
       comment = "Index of the exercise (may be null)"
-    }
-    columns {
-      name = "user_id"
-      type = "string"
-      comment = "User identifier (may be null)"
     }
     columns {
       name = "workout_id"
