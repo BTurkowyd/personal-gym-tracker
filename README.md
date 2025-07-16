@@ -4,6 +4,7 @@ This repository contains the complete infrastructure-as-code and supporting scri
 - Discord bot integration
 - Data ingestion from the Hevy API
 - Data lake and analytics stack (Athena, Glue, S3, Superset)
+- AI agent using AWS Bedrock and Claude 3 Haiku to query data by providing natural language prompts
 - Automated deployment using Terraform, Terragrunt, Docker, and Packer
 
 ---
