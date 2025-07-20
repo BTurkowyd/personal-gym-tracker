@@ -30,7 +30,7 @@ def get_glue_table_schema(input: ToolInput) -> str:
         body = json.loads(body)
 
     result = []
-    for label in ["workouts", "exercises", "sets"]:
+    for label in ["workouts", "exercises", "sets", "exercise_descriptions"]:
         table = body[label]
         table_name = table["table_name"]
         columns = table["columns"]

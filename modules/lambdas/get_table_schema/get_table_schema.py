@@ -65,8 +65,8 @@ def lambda_handler(event, context):
 
     glue = boto3.client("glue")
 
-    # Fetch the schema for all three tables
-    table_names = ["workouts", "exercises", "sets"]
+    # Fetch the schema for all four tables
+    table_names = ["workouts", "exercises", "sets", "exercise_descriptions"]
     schemas = {}
     for table_name in table_names:
         response = glue.get_table(DatabaseName=database_name, Name=table_name)

@@ -33,7 +33,7 @@ build {
   // Install Python dependencies into the Lambda task root.
   provisioner "shell" {
     inline = [
-      "if [ -f /var/task/requirements.txt ]; then pip install -r /var/task/requirements.txt --target $LAMBDA_TASK_ROOT; fi"
+      "if [ -f /var/task/requirements.txt ]; then pip install --only-binary=:all: --target $LAMBDA_TASK_ROOT -r /var/task/requirements.txt; fi"
     ]
   }
 

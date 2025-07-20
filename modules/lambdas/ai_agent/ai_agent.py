@@ -40,6 +40,6 @@ def lambda_handler(event, context):
 
 
 if __name__ == "__main__":
-    prompt = "on what day i had the largest volume in a single set of squats with barbell? return the date, weight and reps from that set."
+    prompt = "what five light exercises for legs i can do after a 5 month break? please prepare me a plan based on my workouts from 2024 and 2025 and exercise descriptions. Give me the names of these five exercises, sets and reps."
 
     lambda_handler({"prompt": prompt}, None)
