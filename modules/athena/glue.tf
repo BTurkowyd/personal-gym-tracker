@@ -208,10 +208,10 @@ resource "aws_glue_catalog_table" "workouts_table_parquet" {
   }
 }
 
-// Glue Table for exercises.parquet
-resource "aws_glue_catalog_table" "exercises_table_parquet" {
+// Glue Table for performed_exercises.parquet
+resource "aws_glue_catalog_table" "performed_exercises_table_parquet" {
   database_name = aws_athena_database.athena_workouts_database.name
-  name          = "exercises"
+  name          = "performed_exercises"
   table_type    = "EXTERNAL_TABLE"
 
   storage_descriptor {
@@ -349,9 +349,9 @@ resource "aws_glue_catalog_table" "sets_table_parquet" {
   }
 }
 
-resource "aws_glue_catalog_table" "exercise_description_table" {
+resource "aws_glue_catalog_table" "exercise_catalog_table" {
   database_name = aws_athena_database.athena_workouts_database.name
-  name          = "exercise_descriptions"
+  name          = "exercise_catalog"
   table_type    = "EXTERNAL_TABLE"
 
   storage_descriptor {

@@ -40,6 +40,6 @@ def lambda_handler(event, context):
 
 
 if __name__ == "__main__":
-    prompt = "what five light exercises for legs i can do after a 5 month break? please prepare me a plan based on my workouts from 2024 and 2025 and exercise descriptions. Give me the names of these five exercises, sets and reps."
+    prompt = "please check my latest several workouts and suggest a full body workout to do next. list me the exercises with descriptions, such as what muscles they work, and what equipment is needed."
 
     lambda_handler({"prompt": prompt}, None)
