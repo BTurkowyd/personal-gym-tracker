@@ -62,3 +62,8 @@ apply:
 init-lancedb:
 	cd side-scripts/initiate-lance-db && \
 	uv run initiance-lance-db.py
+
+# Load exercise descriptions from CSV to Parquet and upload to S3.
+load-exercises:
+	cd side-scripts/describe_exercises && \
+	uv run load_exercises.py

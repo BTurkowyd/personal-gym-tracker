@@ -348,3 +348,46 @@ resource "aws_glue_catalog_table" "sets_table_parquet" {
     }
   }
 }
+
+resource "aws_glue_catalog_table" "exercise_description_table" {
+  database_name = aws_athena_database.athena_workouts_database.name
+  name          = "exercise_descriptions"
+  table_type    = "EXTERNAL_TABLE"
+
+  storage_descriptor {
+    location      = "s3://${var.data_bucket}/sorted/exercise_descriptions"
+    input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+    output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+
+    ser_de_info {
+      serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+    }
+
+    columns {
+      name = "title"
+      type = "string"
+      comment = "Title of the exercise"
+    }
+    columns {
+      name = "equipment_category"
+      type = "string"
+      comment = "Category of equipment used for the exercise"
+    }
+    columns {
+      name = "muscle_group"
+      type = "string"
+      comment = "Muscle group targeted by the exercise"
+    }
+    columns {
+      name = "body_part"
+      type = "string"
+      comment = "Body part targeted by the exercise"
+    }
+    columns {
+      name = "movement_type"
+      type = "string"
+      comment = "Type of movement involved in the exercise (e.g. compound, isolation)"
+    }
+  }
+
+}

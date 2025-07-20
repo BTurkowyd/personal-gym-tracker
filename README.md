@@ -174,6 +174,11 @@ All Lambda functions are packaged as Docker images and pushed to AWS ECR using P
     make init-lancedb
     ```
 
+- **Load exercise descriptions**
+    ```sh
+    make load-exercises-descriptions
+    ```
+
 ### 2. Terragrunt Environments
 
 - **dev** and **prod** environments are managed in `environments/dev` and `environments/prod`.

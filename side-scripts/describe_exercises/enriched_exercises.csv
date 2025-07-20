@@ -1,0 +1,118 @@
+title,equipment_category,muscle_group,body_part,movement_type
+Hanging Leg Raise,none,abdominals,core,isolation
+Squat (Barbell),barbell,quadriceps,legs,compound
+Shoulder Press (Dumbbell),dumbbell,shoulders,upper body,compound
+Cable Crunch,machine,abdominals,core,isolation
+Knee Raise Parallel Bars,machine,abdominals,core,isolation
+Leg Press (Machine),machine,quadriceps,legs,compound
+Seated Leg Curl (Machine),machine,hamstrings,legs,isolation
+Hip Adduction (Machine),machine,adductors,other,isolation
+Rear Delt Reverse Fly (Machine),machine,shoulders,upper body,isolation
+Butterfly (Pec Deck),machine,chest,upper body,isolation
+Triceps Rope Pushdown,machine,triceps,arms,isolation
+Chest Supported Incline Row (Dumbbell),dumbbell,upper_back,back,compound
+Hammer Curl (Dumbbell),dumbbell,biceps,arms,isolation
+Ab Wheel,other,abdominals,core,isolation
+Overhead Press (Dumbbell),dumbbell,shoulders,upper body,compound
+Cable Twist (Up to down),machine,abdominals,core,isolation
+Pulldown LifeFitness,machine,lats,back,isolation
+Hip Thrust (Machine),machine,glutes,lower body,isolation
+Rear Deltoid ,none,other,other,isolation
+Shrug (Barbell),barbell,traps,upper body,isolation
+Triceps Extension (Cable),machine,triceps,arms,isolation
+Sit Up,none,abdominals,core,isolation
+Squat (Band),resistance_band,quadriceps,legs,compound
+Chin Up,machine,lats,back,isolation
+Zercher Squat,barbell,quadriceps,legs,compound
+Cable Core Palloff Press,machine,abdominals,core,compound
+Bent Over Row (Barbell),barbell,upper_back,back,compound
+Bulgarian Split Squat,dumbbell,quadriceps,legs,compound
+Lying Knee Raise,none,abdominals,core,isolation
+Crunch (Machine),machine,abdominals,core,isolation
+Pull Up (Assisted),machine,lats,back,isolation
+Cable Fly Crossovers,machine,chest,upper body,isolation
+Triceps Pushdown,machine,triceps,arms,isolation
+Leg Extension (Machine),machine,quadriceps,legs,isolation
+Calf Press (Machine),machine,calves,other,compound
+Hip Abduction (Machine),machine,abductors,core,isolation
+Hip Thrust (Barbell),barbell,glutes,lower body,isolation
+Bench Press (Dumbbell),dumbbell,chest,upper body,compound
+Chest Supported Reverse Fly (Dumbbell),dumbbell,shoulders,upper body,isolation
+Shrug (Dumbbell),dumbbell,traps,upper body,isolation
+Pull Up,machine,lats,back,isolation
+Seated Calf Raise,machine,calves,other,isolation
+Bench Press (Barbell),barbell,chest,upper body,compound
+Triceps Extension (Dumbbell),dumbbell,triceps,arms,isolation
+Side Bend (Band),none,other,other,isolation
+Iso-lateral Bench Press,machine,chest,upper body,compound
+Back Extension (Machine),machine,lower_back,back,isolation
+Decline Crunch,none,abdominals,core,isolation
+Romanian Deadlift (Dumbbell),dumbbell,hamstrings,legs,compound
+Leg Raise Parallel Bars,machine,abdominals,core,isolation
+Single Arm Cable Crossover,machine,chest,upper body,isolation
+Standing Cable Glute Kickbacks,machine,glutes,lower body,isolation
+Squat (Dumbbell),dumbbell,quadriceps,legs,compound
+Hanging Knee Raise,none,abdominals,core,isolation
+Cross Body Crunch,none,other,other,isolation
+Pistol Squat,none,quadriceps,legs,compound
+Skullcrusher (Barbell),barbell,triceps,arms,isolation
+Side Bend,none,abdominals,core,isolation
+Preacher Curl (Barbell),barbell,biceps,arms,isolation
+Reverse Grip Concentration Curl,dumbbell,biceps,arms,isolation
+Decline Crunch (Weighted),none,abdominals,core,isolation
+Bicep Curl (Cable),machine,biceps,arms,isolation
+Dumbbell Row,dumbbell,lats,back,compound
+Seated Cable Row - Bar Grip,machine,upper_back,back,compound
+Side Bend (Dumbbell),dumbbell,abdominals,core,isolation
+Iso-Lateral Chest Press (Machine),machine,chest,upper body,compound
+Plank,none,abdominals,core,isolation
+Side Plank,none,abdominals,core,isolation
+Pulldown Behind Neck,machine,lats,back,isolation
+Overhead Press (Barbell),barbell,shoulders,upper body,compound
+Triceps Dip,machine,triceps,arms,isolation
+Cable Twist (Down to up),machine,abdominals,core,isolation
+Decline Bench Press (Barbell),barbell,chest,upper body,compound
+Lying Leg Raise,none,abdominals,core,isolation
+V Up,none,abdominals,core,isolation
+Pullover (Dumbbell),dumbbell,lats,back,isolation
+Skullcrusher (Dumbbell),dumbbell,triceps,arms,isolation
+Incline Bench Press (Barbell),barbell,chest,upper body,compound
+Rope Straight Arm Pulldown,machine,lats,back,isolation
+Concentration Curl,dumbbell,biceps,arms,isolation
+Single Leg Standing Calf Raise (Machine),machine,calves,other,isolation
+Lunge (Dumbbell),dumbbell,quadriceps,legs,compound
+Preacher Curl (Dumbbell),dumbbell,biceps,arms,isolation
+Hip Abduction (Band),resistance_band,abductors,core,isolation
+Triceps Extension (Machine),machine,triceps,arms,isolation
+Decline Bench Press (Machine),machine,chest,upper body,compound
+Standing Calf Raise (Machine),machine,calves,other,isolation
+Shrug (Smith Machine),machine,traps,upper body,isolation
+Face Pull,machine,shoulders,upper body,isolation
+Lying Leg Curl (Machine),machine,hamstrings,legs,isolation
+Single Leg Standing Calf Raise (Barbell),barbell,calves,other,isolation
+Lat Pulldown (Machine),machine,lats,back,isolation
+Chest Press (Machine),machine,chest,upper body,compound
+Chest Fly (Dumbbell),dumbbell,chest,upper body,isolation
+Seated Cable Row - V Grip (Cable),machine,upper_back,back,compound
+Lateral Raise (Dumbbell),dumbbell,shoulders,upper body,isolation
+Leg Press Horizontal (Machine),machine,quadriceps,legs,compound
+Iso-Lateral High Row (Machine),machine,lats,back,compound
+Torso Rotation,machine,abdominals,core,isolation
+Incline Bench Press (Dumbbell),dumbbell,chest,upper body,compound
+Incline Chest Fly (Dumbbell),dumbbell,chest,upper body,isolation
+Bicep Curl (Dumbbell),dumbbell,biceps,arms,isolation
+Triceps Dip (Weighted),machine,triceps,arms,isolation
+Iso-Lateral Row (Machine),machine,upper_back,back,compound
+Calf Press Horizontal Machine,machine,calves,other,compound
+Bicep Curl (Barbell),barbell,biceps,arms,isolation
+Reverse Curl (Barbell),barbell,biceps,arms,isolation
+Crunch,none,abdominals,core,isolation
+Deadlift (Barbell),barbell,glutes,lower body,compound
+Chest Fly (Band),resistance_band,chest,upper body,isolation
+Sidekick cable,machine,glutes,lower body,isolation
+Back Extension (Hyperextension),machine,lower_back,back,isolation
+Seated Incline Curl (Dumbbell),dumbbell,biceps,arms,isolation
+Back Extension (Weighted Hyperextension),machine,lower_back,back,isolation
+Hip Abduction,none,abductors,core,isolation
+Plate Squeeze (Svend Press),plate,chest,upper body,compound
+Treadmill,machine,cardio,other,isolation
