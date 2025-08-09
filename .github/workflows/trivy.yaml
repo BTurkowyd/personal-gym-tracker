@@ -1,10 +1,10 @@
 name: Trivy Security Scan
 
 on:
-  push:
-    branches: ["**"]  # Run on all branches
-  pull_request:       # Run on all PR events (opened, updated, reopened)
+  pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
 
 jobs:
   trivy-scan:
@@ -13,10 +13,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Trivy FS scan (high/critical only)
+      - name: Run Trivy FS scan (high/critical only, fail on findings)
         run: |
-          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy fs --severity HIGH,CRITICAL /repo
+          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy fs --severity HIGH,CRITICAL --exit-code 1 /repo
 
-      - name: Run Trivy config scan (high/critical only)
+      - name: Run Trivy config scan (high/critical only, fail on findings)
         run: |
-          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy config --severity HIGH,CRITICAL /repo
+          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy config --severity HIGH,CRITICAL --exit-code 1 /repo
