@@ -1,0 +1,22 @@
+name: Trivy Security Scan
+
+on:
+  push:
+    branches: ["**"]  # Run on all branches
+  pull_request:       # Run on all PR events (opened, updated, reopened)
+    types: [opened, synchronize, reopened]
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy FS scan (high/critical only)
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy fs --severity HIGH,CRITICAL /repo
+
+      - name: Run Trivy config scan (high/critical only)
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy config --severity HIGH,CRITICAL /repo
