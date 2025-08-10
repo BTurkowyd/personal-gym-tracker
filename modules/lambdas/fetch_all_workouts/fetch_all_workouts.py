@@ -219,6 +219,8 @@ def lambda_handler(event, context):
     }
 
     response = requests.get("https://api.hevyapp.com/workout_count", headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch workout count: {response.text}")
     workout_count = response.json()["workout_count"]
 
     response = requests.get("https://api.hevyapp.com/workouts_batch/0", headers=headers)
@@ -238,6 +240,7 @@ def lambda_handler(event, context):
 
     all_workouts.sort(key=lambda x: x["start_time"], reverse=True)
 
+    count = 0
     for w in all_workouts:
         workout_id = w["id"]
         timestamp = str(datetime.fromtimestamp(w["start_time"]))
@@ -307,11 +310,23 @@ def lambda_handler(event, context):
         }
 
         register_file_in_dynamodb(table_name, item)
+        count += 1
+        print(
+            f"Processed workout {count}/{workout_count}: {w['name']} (ID: {workout_id})"
+        )
 
     update_latest_workout_parameter_store(table_name)
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    # print current working directory
+    print("Current working directory:", os.getcwd())
+    # Load environment variables from .env file
+    load_dotenv("/Users/bartoszturkowyd/Projects/aws/silka/modules/.env")
+
+    print(os.environ.get("HEVY_TOKEN"))
     event = {}
     context = None
     result = lambda_handler(event, context)
