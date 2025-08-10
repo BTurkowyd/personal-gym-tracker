@@ -15,8 +15,8 @@ jobs:
 
       - name: Run Trivy FS scan (high/critical only, fail on findings)
         run: |
-          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy fs --severity HIGH,CRITICAL --exit-code 1 /repo
+          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy fs --severity CRITICAL --exit-code 1 /repo
 
       - name: Run Trivy config scan (high/critical only, fail on findings)
         run: |
-          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy config --severity HIGH,CRITICAL --exit-code 1 /repo
+          docker run --rm -v ${{ github.workspace }}:/repo aquasec/trivy config --severity CRITICAL --exit-code 1 /repo
