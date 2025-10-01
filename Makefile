@@ -67,3 +67,19 @@ init-lancedb:
 load-exercises-descriptions:
 	cd side-scripts/describe_exercises && \
 	uv run load_exercises.py
+
+# run dbt to create views
+run-dbt:
+	cd dbt/personal_gym_tracker && \
+	dbt run --profiles-dir .
+
+# Test dbt models
+test-dbt:
+	cd dbt/personal_gym_tracker && \
+	dbt test --profiles-dir .
+
+# Generate dbt documentation
+docs-dbt:
+	cd dbt/personal_gym_tracker && \
+	dbt docs generate --profiles-dir . && \
+	dbt docs serve --profiles-dir .
