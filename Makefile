@@ -71,15 +71,28 @@ load-exercises-descriptions:
 # run dbt to create views
 run-dbt:
 	cd dbt/personal_gym_tracker && \
-	dbt run --profiles-dir .
+	if [ -z "$$AWS_ACCOUNT_ID" ]; then \
+		dotenv -f ../.env run dbt run --profiles-dir . ; \
+	else \
+		dbt run --profiles-dir . ; \
+	fi
 
 # Test dbt models
 test-dbt:
 	cd dbt/personal_gym_tracker && \
-	dbt test --profiles-dir .
+	if [ -z "$$AWS_ACCOUNT_ID" ]; then \
+		dotenv -f ../.env run dbt test --profiles-dir . ; \
+	else \
+		dbt test --profiles-dir . ; \
+	fi
 
 # Generate dbt documentation
 docs-dbt:
 	cd dbt/personal_gym_tracker && \
-	dbt docs generate --profiles-dir . && \
-	dbt docs serve --profiles-dir .
+	if [ -z "$$AWS_ACCOUNT_ID" ]; then \
+		dotenv -f ../.env run dbt docs generate --profiles-dir . && \
+		dotenv -f ../.env run dbt docs serve --profiles-dir . ; \
+	else \
+		dbt docs generate --profiles-dir . && \
+		dbt docs serve --profiles-dir . ; \
+	fi
