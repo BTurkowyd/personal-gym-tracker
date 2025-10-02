@@ -29,8 +29,17 @@ models/
     ├── exercise_performance.sql
     ├── weekly_summary.sql
     ├── muscle_group_frequency.sql
+    ├── personal_records.sql         # NEW: PR tracking
+    ├── exercise_frequency.sql       # NEW: Exercise usage patterns
+    ├── training_patterns.sql        # NEW: Temporal patterns
     └── schema.yml
+tests/              # Data quality tests
+    ├── assert_personal_records_*.sql
+    ├── assert_exercise_frequency_*.sql
+    └── assert_training_patterns_*.sql
 ```
+
+**See [MARTS_GUIDE.md](./MARTS_GUIDE.md) for detailed documentation of all marts and business questions they answer.**
 
 ## Data Sources
 
