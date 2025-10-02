@@ -62,3 +62,101 @@ models:
         description: Most recent date this muscle group was trained
       - name: days_since_last_trained
         description: Number of days since this muscle group was last trained
+
+  - name: personal_records
+    description: Personal Records (PR) tracking for each exercise with progression history
+    columns:
+      - name: exercise_name
+        description: Name of the exercise
+        tests:
+          - not_null
+      - name: muscle_group
+        description: Primary muscle group targeted by the exercise
+      - name: equipment_category
+        description: Equipment used for the exercise
+      - name: current_pr_weight
+        description: Current personal record weight for this exercise
+        tests:
+          - not_null
+      - name: current_pr_date
+        description: Date when the current PR was achieved
+      - name: days_since_pr
+        description: Number of days since the current PR was set
+      - name: first_pr_date
+        description: Date of the first recorded PR for this exercise
+      - name: starting_weight
+        description: The initial weight used for this exercise
+      - name: total_weight_improvement
+        description: Total weight improvement from starting weight to current PR
+      - name: improvement_percentage
+        description: Percentage improvement from starting weight to current PR
+      - name: pr_count
+        description: Number of times a new PR was achieved for this exercise
+
+  - name: exercise_frequency
+    description: Exercise frequency and usage patterns with popularity rankings
+    columns:
+      - name: exercise_name
+        description: Name of the exercise
+        tests:
+          - not_null
+      - name: muscle_group
+        description: Primary muscle group targeted
+      - name: equipment_category
+        description: Equipment used
+      - name: times_performed
+        description: Number of times this exercise was performed across all workouts
+      - name: days_performed
+        description: Number of unique days this exercise was performed
+      - name: total_sets
+        description: Total number of sets performed
+      - name: total_reps
+        description: Total number of reps across all sets
+      - name: total_volume_kg
+        description: Total volume (weight × reps) for this exercise
+      - name: avg_weight_kg
+        description: Average weight used across all sets
+      - name: max_weight_kg
+        description: Maximum weight ever lifted for this exercise
+      - name: avg_rpe
+        description: Average Rate of Perceived Exertion
+      - name: avg_sets_per_performance
+        description: Average number of sets per exercise performance
+      - name: avg_reps_per_set
+        description: Average number of reps per set
+      - name: first_performed_date
+        description: Date when this exercise was first performed
+      - name: last_performed_date
+        description: Date when this exercise was last performed
+      - name: days_since_last_performed
+        description: Days since this exercise was last performed
+      - name: popularity_rank
+        description: Overall popularity ranking (1 = most performed)
+      - name: muscle_group_rank
+        description: Popularity ranking within the muscle group
+
+  - name: training_patterns
+    description: Training patterns including day-of-week, time-of-day, monthly trends, and consistency metrics
+    columns:
+      - name: analysis_type
+        description: Type of analysis (day_of_week_analysis, time_of_day_analysis, monthly_analysis, overall_summary)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['day_of_week_analysis', 'time_of_day_analysis', 'monthly_analysis', 'overall_summary']
+      - name: dimension
+        description: Dimension value (day number, hour, month, or 'total')
+      - name: dimension_label
+        description: Human-readable label for the dimension
+      - name: metric_count
+        description: Count of workouts for this dimension
+      - name: metric_avg_duration
+        description: Average workout duration in minutes
+      - name: metric_total_volume
+        description: Total volume for this dimension
+      - name: metric_avg_volume
+        description: Average volume per workout
+      - name: metric_training_days
+        description: Number of training days (for monthly analysis)
+      - name: metric_consistency_pct
+        description: Consistency percentage (for overall summary)
