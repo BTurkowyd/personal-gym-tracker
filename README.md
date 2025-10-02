@@ -19,7 +19,8 @@ This repository contains the complete infrastructure-as-code and supporting scri
   - [Environment Setup](#environment-setup)
   - [Deployment](#deployment)
     - [1. Build and Push Lambda Docker Images](#1-build-and-push-lambda-docker-images)
-    - [2. Terragrunt Environments](#2-terragrunt-environments)
+    - [2. dbt Data Transformation](#2-dbt-data-transformation)
+    - [3. Terragrunt Environments](#3-terragrunt-environments)
   - [Local Development (Superset)](#local-development-superset)
   - [Modules Overview](#modules-overview)
   - [Security Notes](#security-notes)
@@ -48,15 +49,18 @@ The infrastructure is designed to ingest workout data from the Hevy API, store i
 - **S3**: Stores raw and processed workout data.
 - **DynamoDB**: Metadata and indexing for workouts.
 - **Athena & Glue**: Query and catalog workout data (grouped as the Data layer).
+- **dbt (Data Build Tool)**: Transforms raw workout data into analytical models, creating staging views and data marts for structured analytics and reporting.
 - **AI Agent (Bedrock Claude)**: Receives user prompts (from a local script or Discord), retrieves schema and context from `get_table_schema`, executes queries via `execute_query`, and returns results to the user. It stores successfully executed queries in the vectorized database (LanceDB) to improve the future queries syntax quality.
 - **Superset**: Analytics UI, deployed on EC2 or locally via Docker, connected to Athena for advanced analytics and visualization.
 
 **Workflow Overview:**
 - The Discord bot and API Gateway handle incoming requests, via set of defined in `side-scripts/discord_bot/bot_commands.py`.
 - The user has to provide a one time password (OTP) with each request.
+- Raw workout data from Hevy API is stored in S3 as both JSON and Parquet files, cataloged in AWS Glue.
+- dbt transforms the raw data into cleaned staging models and analytical marts, creating views in Athena for easy querying.
 - For analytics queries, the local script calls Bedrock Claude (AI Agent), which orchestrates calls to `get_table_schema` and `execute_query` Lambdas.
-- The AI Agent uses Glue and Athena to access and query workout data, returning results to the user.
-- Superset provides a UI for direct analytics and visualization on top of Athena.
+- The AI Agent uses Glue and Athena to access and query workout data (including dbt-generated views), returning results to the user.
+- Superset provides a UI for direct analytics and visualization on top of Athena, with access to both raw tables and dbt marts.
 
 ---
 
@@ -70,6 +74,8 @@ The infrastructure is designed to ingest workout data from the Hevy API, store i
 │   ├── superset-user/      # IAM user for Superset
 │   ├── superset_instance/  # EC2 and Docker Compose for Superset
 │   └── ...                 # Other infra modules
+├── dbt/                    # dbt project for data transformation
+│   └── personal_gym_tracker/  # dbt models, staging, and marts
 ├── local_postgres/         # Local Docker Compose for Superset development
 ├── side-scripts/           # Utility scripts (bot commands, diagrams, etc.)
 ├── Makefile                # Build and deployment automation
@@ -88,6 +94,7 @@ The infrastructure is designed to ingest workout data from the Hevy API, store i
 - **Packer** (for building Lambda Docker images)
 - **Python 3.11** (for local scripts and Superset)
 - **uv** ([https://github.com/astral-sh/uv](https://github.com/astral-sh/uv)) for Python dependency management (compatible with Pipfile/Pipfile.lock)
+- **dbt-core** and **dbt-athena-community** (for data transformation) - installed via uv
 
 ---
 
@@ -136,6 +143,14 @@ The infrastructure is designed to ingest workout data from the Hevy API, store i
       ```
     - For more, see [uv documentation](https://github.com/astral-sh/uv).
 
+6. **Configure dbt:**
+    - dbt configuration is already set up in `dbt/personal_gym_tracker/profiles.yml`
+    - Update the profile if you need to change the Athena database, S3 staging location, or AWS profile
+    - The default configuration uses:
+      - Database: `<AWS_ACCOUNT_ID>_workouts_database`
+      - S3 Staging: `s3://<AWS_ACCOUNT_ID>-workouts-bucket-6mabw3s4smjiozsqyi76rq/dbt`
+      - AWS Profile: `cdk-dev`
+
 ---
 
 ## Deployment
@@ -179,7 +194,41 @@ All Lambda functions are packaged as Docker images and pushed to AWS ECR using P
     make load-exercises-descriptions
     ```
 
-### 2. Terragrunt Environments
+### 2. dbt Data Transformation
+
+The project uses dbt (Data Build Tool) to transform raw workout data into analytical models.
+
+- **Run all dbt models:**
+    ```sh
+    make run-dbt
+    ```
+    This will create staging views and analytical marts in your Athena database.
+
+- **Test dbt models:**
+    ```sh
+    make test-dbt
+    ```
+
+- **Generate dbt documentation:**
+    ```sh
+    make docs-dbt
+    ```
+
+**dbt Project Structure:**
+- **Staging Models** (`dbt/personal_gym_tracker/models/staging/`):
+  - `stg_workouts`: Cleaned workout data with calculated duration
+  - `stg_exercises`: Standardized exercise data with muscle groups
+  - `stg_sets`: Set data with calculated volume (weight × reps)
+
+- **Mart Models** (`dbt/personal_gym_tracker/models/marts/`):
+  - `workout_summary`: Complete workout overview with aggregated metrics
+  - `exercise_performance`: Exercise progression tracking with personal bests
+  - `weekly_summary`: Weekly aggregated statistics for consistency tracking
+  - `muscle_group_frequency`: Training frequency analysis by muscle group
+
+All models are created as views in the Athena database `926728314305_workouts_database`.
+
+### 3. Terragrunt Environments
 
 - **dev** and **prod** environments are managed in `environments/dev` and `environments/prod`.
 - Each environment has its own `terragrunt.hcl` that points to the root modules and sets environment-specific variables.

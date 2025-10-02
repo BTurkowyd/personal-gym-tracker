@@ -1,0 +1,80 @@
+version: 2
+
+sources:
+  - name: gym_tracker
+    description: Raw workout data from AWS Glue tables
+    schema: "926728314305_workouts_database"
+    tables:
+      - name: workouts
+        description: Contains workout session data
+        columns:
+          - name: id
+            description: Unique identifier for the workout
+          - name: name
+            description: Name of the workout
+          - name: start_time
+            description: Unix timestamp when the workout started
+          - name: end_time
+            description: Unix timestamp when the workout ended
+          
+      - name: performed_exercises
+        description: Contains exercises performed during workouts
+        columns:
+          - name: id
+            description: Unique identifier for the exercise instance
+          - name: workout_id
+            description: Foreign key to workouts table
+          - name: title
+            description: Name of the exercise
+          
+      - name: sets
+        description: Contains individual sets performed for each exercise
+        columns:
+          - name: id
+            description: Unique identifier for the set
+          - name: workout_id
+            description: Foreign key to workouts table
+          - name: exercise_id
+            description: Foreign key to performed_exercises table
+          - name: reps
+            description: Number of repetitions
+          - name: weight_kg
+            description: Weight used in kilograms
+
+models:
+  - name: stg_workouts
+    description: Cleaned and standardized workout data
+    columns:
+      - name: workout_id
+        description: Unique identifier for the workout
+        tests:
+          - unique
+          - not_null
+      - name: workout_date
+        description: Date when the workout occurred
+      - name: workout_duration_minutes
+        description: Duration of the workout in minutes
+
+  - name: stg_exercises
+    description: Cleaned and standardized exercise data
+    columns:
+      - name: exercise_id
+        description: Unique identifier for the exercise instance
+        tests:
+          - unique
+          - not_null
+      - name: workout_id
+        description: Foreign key to workouts
+        tests:
+          - not_null
+
+  - name: stg_sets
+    description: Cleaned and standardized set data
+    columns:
+      - name: set_id
+        description: Unique identifier for the set
+        tests:
+          - unique
+          - not_null
+      - name: set_volume_kg
+        description: Calculated volume (weight * reps)

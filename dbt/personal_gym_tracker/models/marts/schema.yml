@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: workout_summary
+    description: Comprehensive workout summary with aggregated metrics
+    columns:
+      - name: workout_id
+        description: Unique identifier for the workout
+      - name: workout_name
+        description: Name of the workout
+      - name: workout_date
+        description: Date when the workout occurred
+      - name: total_exercises
+        description: Number of different exercises performed
+      - name: total_sets
+        description: Total number of sets performed
+      - name: total_volume_kg
+        description: Total volume (weight × reps) in kilograms
+      - name: muscle_groups_trained
+        description: Array of muscle groups trained in this workout
+
+  - name: exercise_performance
+    description: Exercise-level performance tracking and personal bests
+    columns:
+      - name: exercise_name
+        description: Name of the exercise
+      - name: muscle_group
+        description: Primary muscle group targeted
+      - name: workout_date
+        description: Date when the exercise was performed
+      - name: max_weight_kg
+        description: Maximum weight lifted in this session
+      - name: personal_best_weight
+        description: Personal best weight for this exercise up to this date
+      - name: is_personal_best
+        description: Flag indicating if this is a new personal best
+
+  - name: weekly_summary
+    description: Weekly aggregated workout statistics
+    columns:
+      - name: week_start_date
+        description: Start date of the week (Monday)
+      - name: week_end_date
+        description: End date of the week (Sunday)
+      - name: workouts_per_week
+        description: Number of workouts completed in the week
+      - name: total_volume_kg
+        description: Total volume lifted during the week
+      - name: total_sets
+        description: Total number of sets performed in the week
+
+  - name: muscle_group_frequency
+    description: Training frequency and volume by muscle group
+    columns:
+      - name: muscle_group
+        description: Name of the muscle group
+      - name: times_trained
+        description: Total number of times this muscle group was trained
+      - name: total_volume_kg
+        description: Total volume for this muscle group across all workouts
+      - name: last_trained_date
+        description: Most recent date this muscle group was trained
+      - name: days_since_last_trained
+        description: Number of days since this muscle group was last trained

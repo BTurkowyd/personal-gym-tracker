@@ -13,3 +13,4 @@
 .env
 .DS_store
 *.pyc
+dbt.log
