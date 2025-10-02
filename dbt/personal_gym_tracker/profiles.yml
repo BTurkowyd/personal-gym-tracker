@@ -3,9 +3,9 @@ personal_gym_tracker:
   outputs:
     dev:
       type: athena
-      s3_staging_dir: s3://{{ env_var('AWS_ACCOUNT_ID') }}-workouts-bucket-6mabw3s4smjiozsqyi76rq/dbt
+      s3_staging_dir: "s3://{{ env_var('AWS_ACCOUNT_ID') }}-workouts-bucket-6mabw3s4smjiozsqyi76rq/dbt"
       region_name: eu-central-1
       database: awsdatacatalog
-      schema: {{ env_var('AWS_ACCOUNT_ID') }}_workouts_database
+      schema: "{{ env_var('AWS_ACCOUNT_ID') }}_workouts_database"
       work_group: primary
       profile_name: cdk-dev
