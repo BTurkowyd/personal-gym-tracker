@@ -2,11 +2,12 @@
 
 This guide provides a comprehensive overview of all analytical marts in the Personal Gym Tracker dbt project and the business questions they answer.
 
+
 ## Overview
 
-The project contains 7 analytical marts, each designed to answer specific business questions about workout performance, progression, and training patterns.
+The project contains a comprehensive set of analytical marts, each designed to answer specific business questions about workout performance, progression, training patterns, and training quality. The marts below are available in the current dbt project.
 
-## Existing Marts
+## Marts
 
 ### 1. workout_summary
 **Purpose**: Comprehensive workout overview with aggregated metrics
@@ -112,8 +113,6 @@ ORDER BY times_trained DESC;
 
 ---
 
-## New Marts (v2)
-
 ### 5. personal_records
 **Purpose**: Comprehensive Personal Records (PR) tracking with progression history
 
@@ -207,6 +206,131 @@ ORDER BY times_performed DESC;
 ---
 
 ### 7. training_patterns
+### 8. set_rep_rpe_distribution
+**Purpose**: Distribution and percentile analysis for set order, rep count, and RPE
+
+**Key Metrics**:
+- Set order distribution (how many sets are performed as first, second, etc.)
+- Rep count distribution (how many sets at each rep count)
+- RPE (Rate of Perceived Exertion) distribution (how many sets at each RPE)
+- RPE percentiles (median, 90th, 95th percentile)
+
+**Business Questions Answered**:
+- What is the typical set/rep scheme in my training?
+- How hard do I usually train (RPE distribution)?
+- What are the most common rep counts?
+- What is my typical and peak RPE?
+
+**Example Query**:
+```sql
+-- Rep count distribution
+SELECT col1 as reps, col2 as set_count
+FROM set_rep_rpe_distribution
+WHERE metric = 'rep_distribution'
+ORDER BY CAST(col1 AS INTEGER);
+
+-- RPE percentiles
+SELECT col2 as median_rpe, col3 as p90_rpe, col4 as p95_rpe
+FROM set_rep_rpe_distribution
+WHERE metric = 'rpe_percentiles';
+```
+
+---
+
+### 9. monthly_progression
+**Purpose**: Best lift and total training volume for each month
+
+**Key Metrics**:
+- Best lift (max weight) per month
+- Total training volume per month
+
+**Business Questions Answered**:
+- How is my strength progressing month-to-month?
+- Is my training volume increasing or decreasing over time?
+
+**Example Query**:
+```sql
+SELECT month, best_lift_kg, total_volume_kg
+FROM monthly_progression
+ORDER BY month DESC;
+```
+
+---
+
+### 10. equipment_usage_trends
+**Purpose**: Equipment usage trends by week and month
+
+**Key Metrics**:
+- Equipment usage counts by week and month
+
+**Business Questions Answered**:
+- What equipment do I use most over time?
+- Are there trends in my equipment usage?
+
+**Example Query**:
+```sql
+SELECT period, equipment_category, period_start, uses
+FROM equipment_usage_trends
+ORDER BY period_start DESC;
+```
+
+---
+
+### 11. movement_pattern_balance
+**Purpose**: Estimates push/pull/legs/core balance using exercise name mapping
+
+**Key Metrics**:
+- Number of exercises classified as push, pull, legs, core, or other
+
+**Business Questions Answered**:
+- Is my training balanced across movement patterns?
+- Am I neglecting any movement pattern?
+
+**Example Query**:
+```sql
+SELECT movement_pattern, exercise_count
+FROM movement_pattern_balance
+ORDER BY exercise_count DESC;
+```
+
+---
+
+### 12. staleness
+**Purpose**: Lists exercises and muscle groups not trained in the last N days
+
+**Key Metrics**:
+- Days since each exercise or muscle group was last trained
+
+**Business Questions Answered**:
+- What exercises or muscle groups am I neglecting?
+- How long has it been since I trained a specific exercise?
+
+**Example Query**:
+```sql
+SELECT exercise_name, muscle_group, last_trained_date, days_since_trained
+FROM staleness
+ORDER BY days_since_trained DESC;
+```
+
+---
+
+### 13. streaks
+**Purpose**: Tracks current and longest streaks of consecutive training days
+
+**Key Metrics**:
+- Streak start and end dates
+- Streak length (number of consecutive days)
+
+**Business Questions Answered**:
+- What is my longest training streak?
+- What is my current streak?
+
+**Example Query**:
+```sql
+SELECT streak_start, streak_end, streak_length
+FROM streaks
+ORDER BY streak_length DESC, streak_end DESC;
+```
 **Purpose**: Temporal training patterns and consistency analysis
 
 **Key Metrics**:

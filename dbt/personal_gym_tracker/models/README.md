@@ -16,6 +16,15 @@ models/
     ├── exercise_performance.sql
     ├── weekly_summary.sql
     ├── muscle_group_frequency.sql
+    ├── personal_records.sql
+    ├── exercise_frequency.sql
+    ├── training_patterns.sql
+    ├── set_rep_rpe_distribution.sql
+    ├── monthly_progression.sql
+    ├── equipment_usage_trends.sql
+    ├── movement_pattern_balance.sql
+    ├── staleness.sql
+    ├── streaks.sql
     └── schema.yml
 ```
 
@@ -44,6 +53,7 @@ Cleans and standardizes set data:
 - Calculates set volume (weight × reps)
 - Preserves RPE and other metrics
 
+
 ## Mart Models
 
 ### `workout_summary`
@@ -71,6 +81,33 @@ Training frequency analysis:
 - Total volume per muscle group
 - Days since last training
 - Training patterns
+
+### `personal_records`
+Tracks current PRs for each exercise, PR progression, and improvement metrics.
+
+### `exercise_frequency`
+Exercise usage patterns, popularity, and neglect analysis.
+
+### `training_patterns`
+Temporal training patterns (day-of-week, time-of-day, monthly, consistency).
+
+### `set_rep_rpe_distribution`
+Histograms and percentiles for set order, rep count, and RPE (Rate of Perceived Exertion).
+
+### `monthly_progression`
+Best lift and total training volume for each month.
+
+### `equipment_usage_trends`
+Equipment usage trends by week and month.
+
+### `movement_pattern_balance`
+Estimates push/pull/legs/core balance using exercise name mapping.
+
+### `staleness`
+Lists exercises and muscle groups not trained in the last N days.
+
+### `streaks`
+Tracks current and longest streaks of consecutive training days.
 
 ## Running the Project
 
