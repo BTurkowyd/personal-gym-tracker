@@ -225,6 +225,15 @@ The project uses dbt (Data Build Tool) to transform raw workout data into analyt
   - `exercise_performance`: Exercise progression tracking with personal bests
   - `weekly_summary`: Weekly aggregated statistics for consistency tracking
   - `muscle_group_frequency`: Training frequency analysis by muscle group
+  - `personal_records`: PR tracking with progression history
+  - `exercise_frequency`: Exercise usage patterns and popularity rankings
+  - `training_patterns`: Day/time patterns and consistency metrics
+  - `set_rep_rpe_distribution`: Set/rep/RPE histograms and percentiles
+  - `monthly_progression`: Best lift and volume by month
+  - `equipment_usage_trends`: Equipment usage trends by week/month
+  - `movement_pattern_balance`: Push/pull/legs/core balance
+  - `staleness`: Neglected exercises/muscle groups
+  - `streaks`: Training streaks (consecutive days)
 
 All models are created as views in the Athena database `926728314305_workouts_database`.
 
