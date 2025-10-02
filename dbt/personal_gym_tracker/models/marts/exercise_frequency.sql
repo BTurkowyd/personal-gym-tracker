@@ -51,14 +51,14 @@ exercise_stats as (
 equipment_stats as (
     select
         equipment_category,
-        count(distinct exercise_name) as unique_exercises,
-        count(distinct exercise_id) as total_uses,
-        sum(total_sets) as total_sets,
-        round(sum(total_volume_kg), 2) as total_volume_kg
+        count(distinct e.exercise_name) as unique_exercises,
+        count(distinct e.exercise_id) as total_uses,
+        count(s.set_id) as total_sets,
+        round(sum(s.set_volume_kg), 2) as total_volume_kg
     from exercises e
-    left join sets s on e.exercise_id = s.exercise_id
-    where equipment_category is not null
-    group by equipment_category
+        left join sets s on e.exercise_id = s.exercise_id
+        where equipment_category is not null
+        group by equipment_category
 ),
 
 -- Add ranking for exercises
