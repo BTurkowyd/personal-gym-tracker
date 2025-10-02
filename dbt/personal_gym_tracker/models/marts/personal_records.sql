@@ -17,16 +17,14 @@ workouts as (
     select * from {{ ref('stg_workouts') }}
 ),
 
+-- Get max weight per exercise per workout
 exercise_max_weights as (
     select
         e.exercise_name,
         e.muscle_group,
         e.equipment_category,
         w.workout_date,
-        w.workout_id,
-        e.exercise_id,
-        max(s.weight_kg) as max_weight_kg,
-        max(s.reps) as max_reps_at_weight
+        max(s.weight_kg) as max_weight_kg
     from exercises e
     inner join sets s on e.exercise_id = s.exercise_id
     inner join workouts w on e.workout_id = w.workout_id
@@ -35,68 +33,80 @@ exercise_max_weights as (
         e.exercise_name,
         e.muscle_group,
         e.equipment_category,
-        w.workout_date,
-        w.workout_id,
-        e.exercise_id
+        w.workout_date
 ),
 
+-- Calculate running max (PR at each date)
+pr_progression as (
+    select
+        exercise_name,
+        muscle_group,
+        equipment_category,
+        workout_date,
+        max_weight_kg,
+        max(max_weight_kg) over (
+            partition by exercise_name 
+            order by workout_date 
+            rows between unbounded preceding and current row
+        ) as running_pr
+    from exercise_max_weights
+),
+
+-- Flag when new PRs are set
+pr_milestones as (
+    select
+        *,
+        case 
+            when max_weight_kg = running_pr 
+            and (lag(running_pr) over (partition by exercise_name order by workout_date) is null
+                 or max_weight_kg > lag(running_pr) over (partition by exercise_name order by workout_date))
+            then true 
+            else false 
+        end as is_new_pr
+    from pr_progression
+),
+
+-- Get current PR for each exercise
 current_prs as (
     select
         exercise_name,
         muscle_group,
         equipment_category,
-        max(max_weight_kg) as current_pr_weight,
-        max(workout_date) as pr_date
-    from exercise_max_weights
-    group by
-        exercise_name,
-        muscle_group,
-        equipment_category
+        max(running_pr) as current_pr_weight
+    from pr_milestones
+    group by exercise_name, muscle_group, equipment_category
 ),
 
-pr_history as (
+-- Get the date when current PR was achieved
+pr_dates as (
     select
-        emw.exercise_name,
-        emw.muscle_group,
-        emw.equipment_category,
-        emw.workout_date,
-        emw.max_weight_kg,
-        emw.max_reps_at_weight,
-        -- Calculate if this was a PR at the time
-        max(emw.max_weight_kg) over (
-            partition by emw.exercise_name 
-            order by emw.workout_date 
-            rows between unbounded preceding and current row
-        ) as pr_at_date,
-        -- Calculate previous PR weight
-        lag(max(emw.max_weight_kg) over (
-            partition by emw.exercise_name 
-            order by emw.workout_date 
-            rows between unbounded preceding and current row
-        ), 1) over (
-            partition by emw.exercise_name 
-            order by emw.workout_date
-        ) as previous_pr_weight,
-        -- Flag if this workout set a new PR
-        case
-            when emw.max_weight_kg = max(emw.max_weight_kg) over (
-                partition by emw.exercise_name 
-                order by emw.workout_date 
-                rows between unbounded preceding and current row
-            )
-            and emw.max_weight_kg > coalesce(
-                lag(max(emw.max_weight_kg) over (
-                    partition by emw.exercise_name 
-                    order by emw.workout_date 
-                    rows between unbounded preceding and current row
-                ), 1) over (
-                    partition by emw.exercise_name 
-                    order by emw.workout_date
-                ), 0)
-            then true
-            else false
-        end as is_new_pr
-    from exercise_max_weights emw
+        pm.exercise_name,
+        max(pm.workout_date) as current_pr_date
+    from pr_milestones pm
+    inner join current_prs cp 
+        on pm.exercise_name = cp.exercise_name 
+        and pm.max_weight_kg = cp.current_pr_weight
+    group by pm.exercise_name
+),
+
+-- Get starting weights and first PR dates
+starting_stats as (
+    select
+        exercise_name,
+        min(max_weight_kg) as starting_weight,
+        min(workout_date) as first_workout_date,
+        min(case when is_new_pr then workout_date end) as first_pr_date
+    from pr_milestones
+    group by exercise_name
+),
+
+-- Count PR achievements
+pr_counts as (
+    select
+        exercise_name,
+        sum(case when is_new_pr then 1 else 0 end) as pr_count
+    from pr_milestones
+    group by exercise_name
 )
 
 select
@@ -104,47 +114,22 @@ select
     cp.muscle_group,
     cp.equipment_category,
     cp.current_pr_weight,
-    cp.pr_date as current_pr_date,
-    date_diff('day', cp.pr_date, current_date) as days_since_pr,
-    -- Get first PR details
-    (
-        select min(workout_date) 
-        from pr_history ph2 
-        where ph2.exercise_name = cp.exercise_name 
-        and ph2.is_new_pr = true
-    ) as first_pr_date,
-    (
-        select min(max_weight_kg) 
-        from pr_history ph2 
-        where ph2.exercise_name = cp.exercise_name
-    ) as starting_weight,
-    -- Calculate total improvement
-    round(
-        cp.current_pr_weight - coalesce((
-            select min(max_weight_kg) 
-            from pr_history ph2 
-            where ph2.exercise_name = cp.exercise_name
-        ), 0),
-        2
-    ) as total_weight_improvement,
-    -- Calculate improvement percentage
+    pd.current_pr_date,
+    date_diff('day', pd.current_pr_date, current_date) as days_since_pr,
+    ss.first_pr_date,
+    ss.starting_weight,
+    round(cp.current_pr_weight - coalesce(ss.starting_weight, 0), 2) as total_weight_improvement,
     round(
         case
-            when (select min(max_weight_kg) from pr_history ph2 where ph2.exercise_name = cp.exercise_name) > 0
-            then (
-                (cp.current_pr_weight - (select min(max_weight_kg) from pr_history ph2 where ph2.exercise_name = cp.exercise_name)) 
-                / (select min(max_weight_kg) from pr_history ph2 where ph2.exercise_name = cp.exercise_name)
-            ) * 100
+            when ss.starting_weight > 0
+            then ((cp.current_pr_weight - ss.starting_weight) / ss.starting_weight) * 100
             else 0
         end,
         2
     ) as improvement_percentage,
-    -- Count how many times PR was broken
-    (
-        select count(*) 
-        from pr_history ph2 
-        where ph2.exercise_name = cp.exercise_name 
-        and ph2.is_new_pr = true
-    ) as pr_count
+    pc.pr_count
 from current_prs cp
+left join pr_dates pd on cp.exercise_name = pd.exercise_name
+left join starting_stats ss on cp.exercise_name = ss.exercise_name
+left join pr_counts pc on cp.exercise_name = pc.exercise_name
 order by cp.current_pr_weight desc, cp.exercise_name

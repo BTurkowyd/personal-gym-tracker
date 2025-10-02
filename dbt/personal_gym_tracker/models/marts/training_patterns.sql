@@ -131,8 +131,8 @@ union all
 
 select
     'monthly_analysis' as analysis_type,
-    cast(ms.year as varchar) || '-' || cast(ms.month as varchar) as dimension,
-    format_datetime(ms.month_start_date, 'yyyy-MM') as dimension_label,
+    cast(ms.year as varchar) || '-' || lpad(cast(ms.month as varchar), 2, '0') as dimension,
+    cast(ms.year as varchar) || '-' || lpad(cast(ms.month as varchar), 2, '0') as dimension_label,
     ms.workout_count as metric_count,
     ms.avg_duration_minutes as metric_avg_duration,
     ms.total_volume_kg as metric_total_volume,
